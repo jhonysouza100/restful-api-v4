@@ -50,4 +50,4 @@ export function validateEnv(): Env {
 /**
  * Obtiene la configuración de entorno
  */
-export const config = validateEnv();
+export const env = validateEnv();

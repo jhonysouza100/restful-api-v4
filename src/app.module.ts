@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { config } from './config/env';
+import { env } from './config/env.config';
 
 @Module({
   imports: [],
@@ -10,7 +10,7 @@ import { config } from './config/env';
     AppService,
     {
       provide: 'CONFIG',
-      useValue: config,
+      useValue: env,
     },
   ],
 })

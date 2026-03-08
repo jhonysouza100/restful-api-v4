@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { config as envConfig } from './config/env';
+import { env } from './config/env.config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -41,9 +41,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("docs", app, document);
 
-  const port = envConfig.PORT;
-  await app.listen(port);
-  console.log(`✓ Aplicación escuchando en puerto ${port}`);
+  await app.listen(env.PORT);
 }
 
 bootstrap();
