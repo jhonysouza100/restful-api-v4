@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestj
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TenantEntity } from '../entities/tenant.entity';
+import { hashPassword } from '../../common/utils/bcrypt.util';
 import { CreateTenantDto, UpdateTenantDto } from '../dtos/tenant.dto';
 
 @Injectable()
@@ -66,12 +67,36 @@ export class TenantsService {
 
   // Only root access to create tenants
   async create(data: CreateTenantDto) {
-    
+    // Verificomos si el usuario ya existe
+    await this.verifyUnique(data.name, data.email.user)
+    // encryptamos el password
+    const hashedPassword = await hashPassword(data.password);
+
+    const newTenant = this.tenantRepository.create({
+      ...data,
+      password: hashedPassword,
+    });
+
+    return await this.tenantRepository.save(newTenant);
   }
 
   // Only root access to update tenants
   async update(id: number, data: UpdateTenantDto): Promise<void> {
+    // Verificamos si el nombre y el correo electrónico son únicos
+    if(data.name || data.email) await this.verifyUnique(data?.name, data?.email?.user);
+
+    // Si se proporciona, Encriptamos la contraseña
+    if(data.password) {
+       const hashedPassword = await hashPassword(data.password);
+      
+      await this.tenantRepository.update({id}, {...data, password: hashedPassword});
+      
+      throw new HttpException(`User successfully updated`, HttpStatus.OK);
+    }
+
+    await this.tenantRepository.update({id}, data);
     
+    throw new HttpException(`User successfully updated`, HttpStatus.OK);
   }
 
   // Only root access to create tenants
