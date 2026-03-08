@@ -3,6 +3,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { env } from './config/env.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EmailsModule } from './modules/emails/emails.module';
+import { CoreModule } from './core/core.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       autoLoadEntities: true,
       synchronize: true,
     }),
+    EmailsModule,
+    CoreModule,
   ],
   controllers: [AppController],
   providers: [
