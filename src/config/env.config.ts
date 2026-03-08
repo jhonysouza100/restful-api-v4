@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import 'dotenv/config';
 
 /**
  * Esquema de validación para variables de entorno
