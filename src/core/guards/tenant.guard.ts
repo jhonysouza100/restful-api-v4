@@ -28,8 +28,8 @@ export class TenantGuard implements CanActivate {
 
   private async extractTenantData(request: any): Promise<TenantEntity | null> {
     const apiKey = request.headers['x-api-key'];
-    const hostname = request.domain || request.headers['domain'] || '';
-    console.log('Extracting tenant data from request. API Key:', apiKey, 'Hostname:', hostname);
+    const origin = request.origin || request.headers['origin'] || '';
+    console.log('Extracting tenant data from request. API Key:', apiKey, 'Origin:', origin);
 
     if (apiKey) {
       const tenant = await this.tenantsService.findByApiKey(apiKey);
@@ -39,10 +39,10 @@ export class TenantGuard implements CanActivate {
       }
     }
 
-    if (hostname) {
-      const tenant = await this.tenantsService.findByDomain(hostname);
+    if (origin) {
+      const tenant = await this.tenantsService.findByDomain(origin);
       if (tenant) {
-        console.log('Tenant found using Hostname:', tenant.name);
+        console.log('Tenant found using Origin:', tenant.name);
         return tenant;
       }
     }
