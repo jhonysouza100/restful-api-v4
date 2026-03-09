@@ -28,7 +28,7 @@ export class TenantGuard implements CanActivate {
 
   private async extractTenantData(request: any): Promise<TenantEntity | null> {
     const apiKey = request.headers['x-api-key'];
-    const hostname = request.hostname || request.headers['host'] || '';
+    const hostname = request.origin || request.headers['origin'] || '';
     console.log('Extracting tenant data from request. API Key:', apiKey, 'Hostname:', hostname);
 
     if (apiKey) {
