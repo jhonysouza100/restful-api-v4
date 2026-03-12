@@ -8,8 +8,8 @@ import { SendEmailDto } from 'src/modules/emails/dtos/send-mail.dto';
 export class EmailsService {
   constructor(private readonly tenantContextService: TenantContextService) {}
 
-  private getTenatEmail(): EmailCredentialsDto {
-    return this.tenantContextService.getTenatEmail();
+  private getTenantEmail(): EmailCredentialsDto {
+    return this.tenantContextService.getTenantEmail();
   }
 
   async sendMail(data: SendEmailDto) {
@@ -18,14 +18,14 @@ export class EmailsService {
       service: 'gmail',
       secure: true,
       auth: {
-        user: this.getTenatEmail().user,
-        pass: this.getTenatEmail().pass
+        user: this.getTenantEmail().user,
+        pass: this.getTenantEmail().pass
       }
     });
 
     try {
       const response = await transporter.sendMail({
-        from: `"${data.from}" <${this.getTenatEmail().user}>`,
+        from: `"${data.from}" <${this.getTenantEmail().user}>`,
         to: data.to,
         attachments: [...data.attachments || []],
         subject: data.subject,

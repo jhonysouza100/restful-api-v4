@@ -26,6 +26,13 @@ export class TenantsService {
     });
   }
 
+  /**
+   * Busca un tenant por ID (uso interno)
+   * 
+   * @param id - ID del tenant
+   * @returns TenantEntity completo
+   * @throws NotFoundException si no existe o no está activo
+   */
   async findById(id: number): Promise<TenantEntity> {
     const tenant = await this.tenantRepository.findOne({
       where: { id, isActive: true },
@@ -36,11 +43,18 @@ export class TenantsService {
     return tenant;
   }
 
-  // Para la Authenticación
+  /**
+   * Busca un tenant por nombre (usado en autenticación)
+   * Retorna password para validación de credenciales
+   * 
+   * @param param - Nombre del tenant
+   * @returns TenantEntity con: id, name, email, picture, role, password
+   * @throws HttpException si no existe
+   */
   async findByName(param: string) {
     const user = await this.tenantRepository.findOne({
       where: {name: param},
-      // returning only the password for authentication
+      // Retorna solo password para autenticación
       select: ['id', 'name', 'email', 'picture', 'role', 'password'],
     });
     if (!user) {
@@ -49,12 +63,22 @@ export class TenantsService {
     return user;
   }
   
+  /**
+   * Verifica que nombre y email sean únicos
+   * 
+   * @param name - Nombre a validar
+   * @param email - Email a validar
+   * @throws HttpException si ya existen
+   */
   private async verifyUnique(name?: string, email?: string) {
+    // Verifica nombre único
     await this.tenantRepository.find({ where:{ name: name} }).then((user) => {
       if (user.length > 0) {
         throw new HttpException(`El nombre de usuario ya exíste`, HttpStatus.BAD_REQUEST);
       }
     });
+    
+    // Verifica email único
     await this.tenantRepository.find(
       { where: { email: { user: email }} }).then((user) => {
       if (user.length > 0) {
@@ -65,11 +89,19 @@ export class TenantsService {
     return true;
   }
 
-  // Only root access to create tenants
+  /**
+   * Crea un nuevo tenant
+   * ACCESO RESTRINGIDO: Solo root/admin
+   * 
+   * @param data - CreateTenantDto con datos del tenant
+   * @returns TenantEntity creado
+   * @throws HttpException si nombre/email ya existen
+   */
   async create(data: CreateTenantDto) {
-    // Verificomos si el usuario ya existe
+    // Verificamos si el usuario ya existe
     await this.verifyUnique(data.name, data.email.user)
-    // encryptamos el password
+    
+    // Encriptamos la contraseña con bcrypt
     const hashedPassword = await hashPassword(data.password);
 
     const newTenant = this.tenantRepository.create({
@@ -80,12 +112,20 @@ export class TenantsService {
     return await this.tenantRepository.save(newTenant);
   }
 
-  // Only root access to update tenants
+  /**
+   * Actualiza un tenant existente
+   * ACCESO RESTRINGIDO: Solo root/admin
+   * 
+   * @param id - ID del tenant a actualizar
+   * @param data - UpdateTenantDto con campos a actualizar
+   * @throws HttpException si nombre/email (al actualizarse) ya existen
+   * @throws HttpException con mensaje de éxito
+   */
   async update(id: number, data: UpdateTenantDto): Promise<void> {
     // Verificamos si el nombre y el correo electrónico son únicos
     if(data.name || data.email) await this.verifyUnique(data?.name, data?.email?.user);
 
-    // Si se proporciona, Encriptamos la contraseña
+    // Si se proporciona contraseña nueva, la encriptamos
     if(data.password) {
        const hashedPassword = await hashPassword(data.password);
       
@@ -94,23 +134,34 @@ export class TenantsService {
       throw new HttpException(`User successfully updated`, HttpStatus.OK);
     }
 
+    // Actualiza otros campos
     await this.tenantRepository.update({id}, data);
     
     throw new HttpException(`User successfully updated`, HttpStatus.OK);
   }
 
-  // Only root access to create tenants
+  /**
+   * Elimina un tenant (solo el registro, en realidad debería soft-delete)
+   * ACCESO RESTRINGIDO: Solo root/admin
+   * 
+   * @param id - ID del tenant a eliminar
+   * @throws HttpException con mensaje de éxito
+   */
   async remove(id: number): Promise<void> {
     await this.tenantRepository.delete({id});
 
     throw new HttpException(`User successfully removed`, HttpStatus.OK);
   }
 
-  // No se esta usando
+  /**
+   * Retorna todos los tenants activos
+   * NO se está usando actualmente
+   * 
+   * @returns Array de TenantEntity
+   */
   async findAll(): Promise<TenantEntity[]> {
     return await this.tenantRepository.find({
       where: { isActive: true },
     });
   }
-
 }

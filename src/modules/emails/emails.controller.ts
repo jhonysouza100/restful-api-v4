@@ -27,7 +27,7 @@ export class EmailsController {
     description: 'Unauthorized. Tenant identification required. Provide x-api-key header or use domain in URL',
     type: EmailErrorResponse
   })
-  async senMail(@Body() data: SendEmailDto) {
+  async sendMail(@Body() data: SendEmailDto) {
     return await this.emailsService.sendMail(data);
   }
 }
