@@ -2,12 +2,10 @@
 
 ## Descripción
 
-Se ha implementado **Zod** en tu proyecto NestJS para validar y tipar las variables de entorno de forma robusta y segura.
+Se ha implementado **Zod** para validar y tipar las variables de entorno de forma robusta y segura.
 
-## Archivos Creados/Modificados
+### Archivo de configuración central
 
-### 1. `src/config/env.ts` (Nuevo)
-Archivo de configuración central que:
 - Define un esquema con Zod para validar all variables de entorno
 - Proporciona un tipo TypeScript (`Env`) para toda la aplicación
 - Valida las variables al iniciar la aplicación
@@ -17,23 +15,6 @@ Archivo de configuración central que:
 - `NODE_ENV`: Entorno (development, production, test) - Default: development
 - `PORT`: Puerto del servidor - Default: 3000
 - `LOG_LEVEL`: Nivel de logs (error, warn, info, debug) - Default: info
-- `API_KEY`: Clave API (opcional)
-- `DATABASE_URL`: URL de base de datos (opcional)
-- `JWT_SECRET`: Secreto para tokens JWT (opcional)
-
-### 2. `.env.example` (Nuevo)
-Archivo de referencia que muestra todas las variables de entorno disponibles.
-
-### 3. `src/main.ts` (Modificado)
-Actualizado para:
-- Importar la configuración validada desde `src/config/env.ts`
-- Usar `envConfig.PORT` en lugar de `process.env.PORT`
-- Agregar logging al iniciar la aplicación
-
-### 4. `src/app.module.ts` (Modificado)
-Actualizado para:
-- Proporcionar la configuración como un servicio injectable
-- Permitir inyectar la configuración en cualquier componente
 
 ## Cómo Usar
 
@@ -66,7 +47,7 @@ console.log(config.PORT);
 
 Para agregar nuevas variables de entorno:
 
-1. Edita `src/config/env.ts`
+1. Edita `src/common/config/env.config.ts`
 2. Añade la variable en el esquema `envSchema`
 3. Actualiza `.env.example`
 

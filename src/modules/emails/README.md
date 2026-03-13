@@ -10,19 +10,7 @@ Módulo responsable de enviar emails utilizando Nodemailer y Gmail. Implementa a
 - Requiere `TenantGuard` para validar el tenant (mediante header `x-api-key` o dominio)
 - Retorna `201 Created` con información del envelope
 
-## Componentes
-
-### Controller (`emails.controller.ts`)
-- Expone el endpoint POST `/emails`
-- Integra Swagger/OpenAPI documentation
-- Delega lógica de envío al servicio
-
-### Service (`emails.service.ts`)
-- **Método principal**: `sendMail(data: SendEmailDto)`
-- Obtiene credenciales del tenant actual via `TenantContextService`
-- Configura transporter de Nodemailer con Gmail (SMTP)
-- Envía email con los datos proporcionados
-- Retorna el envelope de respuesta o lanza `HttpException` en caso de error
+## Estructura de Datos
 
 ### DTO (`send-mail.dto.ts`)
 Estructura de entrada para enviar emails:
@@ -57,7 +45,7 @@ EmailAttachments {
 
 ## Configuración Requerida
 
-Cada tenant debe tener configuradas sus credenciales de Gmail en el contexto:
+Cada tenant debe tener configuradas sus credenciales de Gmail en la base de datos:
 - **user**: Correo de Gmail del tenant
 - **pass**: Contraseña o app password de Gmail
 

@@ -1,0 +1,10 @@
+{
+  "material-icon-theme.activeIconPack": "nest",
+  // Preferir imports absolutos cuando autocompleta.
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  // Ordenar imports automáticamente
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  }
+}
