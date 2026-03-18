@@ -1,0 +1,31 @@
+### Crear preferencia de pago en Mercado Pago
+POST http://localhost:3000/api/v1/payments/mercadopago/preference
+Content-Type: application/json
+
+{
+  "products": [
+    {
+      "id": "001",
+      "title": "Camiseta ChillHop",
+      "quantity": 1,
+      "price": 299,
+      "discount": 10,
+      "description": "Camiseta edición limitada",
+      "category": "Ropa",
+      "coupon": 0
+    }
+  ],
+  "tenancy": {
+    "api_key": "APP_USR-51530335254561-062622-f5a09558be0a1ce7042a5bc5a5d9d389-280626182",
+    "domain": "https://tu-dominio.com",
+    "company": "ChillHop Studio"
+  }
+}
+
+### Llamar al boton de pago en el frontend
+POST https://api.mercadopago.com
+Content-Type: application/json
+
+{
+  "preference_id": "280626182-767f8262-b4db-4f06-8401-d2b0a9a04335"
+}

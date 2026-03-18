@@ -5,6 +5,7 @@ import { env } from './common/config/env.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmailsModule } from './modules/emails/emails.module';
 import { CoreModule } from './core/core.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CoreModule } from './core/core.module';
     }),
     EmailsModule,
     CoreModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [
