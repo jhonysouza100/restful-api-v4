@@ -42,6 +42,15 @@ $ npm run start:dev
 
 # production mode
 $ npm run start:prod
+
+# Swagger UI
+$ /docs
+
+# Docker build image
+$ `docker build . -t image-name:version`
+
+# Docker run container
+$ `docker run --env-file=./.env -p 3001:3001 mvp-api:beta`
 ```
 
 ## Run tests
@@ -55,6 +64,36 @@ $ npm run test:e2e
 
 # test coverage
 $ npm run test:cov
+```
+
+## Generate resources
+
+```bash
+nest g mo users
+```
+
+```bash
+nest g co users
+```
+
+```bash
+nest g s users
+```
+
+```bash
+|| nest g res users --no-spec # nest generate resource users whitout specs
+```
+
+## Eslint
+`.eslintrc.js`
+```bash
+# eslint rules config
+"prettier/prettier": [
+    "error",
+    {
+      "endOfLine": "auto"
+    }
+  ]
 ```
 
 ## Deployment
