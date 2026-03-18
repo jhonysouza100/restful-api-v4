@@ -17,6 +17,132 @@ Un tenant es una entidad aislada dentro del sistema que representa un usuario/em
 1. **API Key**: Header `x-api-key` en la solicitud
 2. **Dominio**: La URL de origen del request
 
+### Identificación del Tenant
+
+El sistema identifica el tenant de **dos formas** (en orden de prioridad):
+
+#### 1. API Key (Header `x-api-key`)
+Envía la API Key del tenant en el header:
+
+```bash
+curl -H "x-api-key: abc123xyz" http://localhost:3000/api/v1/products/perfumes
+```
+
+**Nota:** La API Key debe estar registrada en la base de datos en el campo `apiKey` de la entidad `Tenant`.
+
+#### 2. Dominio de la URL
+El sistema identifica automáticamente el tenant por el dominio desde donde se hace la consulta. Por ejemplo, si `mitienda.com` hace una consulta, el sistema buscará el tenant asociado a ese dominio:
+
+```bash
+# El tenant se identifica automáticamente por el dominio desde donde se hace la consulta con el header Origin
+curl -H "Origin: https://mitienda.com" http://localhost:3000/api/v1/products
+```
+
+**Nota:** El dominio debe estar registrado en la base de datos en el campo `domain` de la entidad `Tenant`.
+
+### Aislamiento de Datos
+
+- ✅ Cada operación CRUD filtra automáticamente por `tenantId`
+- ✅ Los productos solo son visibles para su tenant correspondiente
+- ✅ No se puede acceder a productos de otros tenants
+- ✅ El `tenantId` se asigna automáticamente al crear productos
+- ✅ Todas las queries incluyen el filtro de tenant automáticamente
+
+### Uso
+
+#### Ejemplo: Crear un producto
+
+```http
+# Usando API Key
+POST /api/v1/products
+x-api-key: abc123xyz
+Content-Type: application/json
+
+{
+  "name": "Chanel No. 5",
+  "price": 89.99,
+  "stock": 50,
+  "brand": "Chanel",
+  "size": "100ml"
+}
+```
+
+```http
+# O usando el dominio (el tenant se identifica automáticamente) Desde: https://mitienda.com
+POST /api/v1/products
+Content-Type: application/json
+Origin: https://mitienda.com
+
+{
+  "name": "Chanel No. 5",
+  "price": 89.99,
+  "stock": 50,
+  "brand": "Chanel",
+  "size": "100ml"
+}
+```
+
+#### Ejemplo: Listar productos
+
+```http
+# Usando API Key
+GET /api/v1/products
+x-api-key: abc123xyz
+```
+
+```http
+# O usando dominio (el tenant se identifica automáticamente)
+GET api/v1/products
+Origin: https://mitienda.com
+```
+
+**Respuesta:** Solo retorna los productos del tenant correspondiente (identificado por API Key o dominio).
+
+#### Ejemplo: Obtener un producto específico
+
+```http
+# Usando API Key
+GET /api/v1/products/1
+x-api-key: abc123xyz
+```
+
+```http
+# O usando dominio
+GET /api/v1/products/1
+Origin: https://mitienda.com
+```
+
+**Nota:** Si el producto con ID 1 no pertenece al tenant identificado, retornará 404.
+
+### Entidad Tenant
+
+Cada tenant tiene la siguiente estructura:
+
+```typescript
+{
+  id: number;              // ID único del tenant
+  name: string;            // Nombre del tenant
+  domain: string;          // Dominio completo (ej: "mitienda.com") (opcional)
+  apiKey: string;         // API Key única (opcional)
+  isActive: boolean;       // Estado activo/inactivo
+  createdAt: Date;         // Fecha de creación
+  updatedAt: Date;         // Fecha de actualización
+}
+```
+
+**Nota:** El tenant debe tener al menos uno de los siguientes campos configurado: `domain` o `apiKey`.
+
+### Seguridad
+
+- ✅ Validación automática del tenant en cada request
+- ✅ Aislamiento completo de datos entre tenants
+- ✅ No se puede acceder a datos de otros tenants
+- ✅ Validación de existencia del tenant antes de procesar requests
+
+Algunos de los endpoints requieren identificar el tenant mediante:
+- Header `x-api-key` con la API Key del tenant, o
+- Dominio completo en la URL desde donde se hace la consulta
+
 ## Componentes
 
 ### Guard (`tenant.guard.ts`)
