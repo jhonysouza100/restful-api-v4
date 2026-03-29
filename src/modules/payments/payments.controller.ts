@@ -13,7 +13,7 @@ export class PaymentsController {
     description: 'Mercadopago espera una respuesta para validar que esa recepción fue correcta. Para eso, debes devolver un HTTP STATUS 200 (OK) o 201 (CREATED).',
   })
   @ApiBody({ type: MercadopagoResponse, description: 'La notificación será enviada con formato JSON atraves de la plataforma de Mercado Pago' })
-  confirmPayment(@Body() notification: MercadopagoResponse) {
+  confirmPayment(@Body() notification: any) {
     try {
       return this.paymentsService.confirmPayment(notification)
     } catch (error) {

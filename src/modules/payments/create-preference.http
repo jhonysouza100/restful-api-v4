@@ -22,10 +22,5 @@ Content-Type: application/json
   }
 }
 
-### Llamar al boton de pago en el frontend
-POST https://api.mercadopago.com
-Content-Type: application/json
-
-{
-  "preference_id": "280626182-767f8262-b4db-4f06-8401-d2b0a9a04335"
-}
+### Consultar una preferecia creada en Mercado Pago
+GET https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=280626182-bbf2bf35-7ec4-4cee-b57e-56228269f53e

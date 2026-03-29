@@ -3,6 +3,9 @@ import { CreateMercadopagoDto } from './dto/create-mercadopago.dto';
 import { MercadopagoResponse } from './interfaces/mercadopago-response.interface';
 import { env } from '../../common/config/env.config';
 
+/**
+  Se debe de recibir el producto procesado desde otro módulo, por ejemplo, el módulo de productos, o el módulo de órdenes. Para este ejemplo, se simula la recepción de un producto procesado desde otro módulo, con la información necesaria para crear la preferencia en Mercado Pago.
+*/
 interface ProductResearched {
   id?: string;
   title: string;
@@ -14,10 +17,19 @@ interface ProductResearched {
   coupon: number;
 }
 
+/**
+ * La información de la empresa, que se utilizará para crear la preferencia en Mercado Pago, se simula con una interfaz Tenancy, que contiene el api_key (mercado pago PRIVATE API KEY), el dominio y el nombre de la empresa.
+ */
+interface Tenancy {
+  api_key: string;
+  domain: string;
+  company: string;
+}
+
 @Injectable()
 export class PaymentsService {
 
-  async createMercadopagoPreference(data: ProductResearched[], tenancy: { api_key: string, domain: string, company: string }): Promise<MercadopagoResponse> {
+  async createMercadopagoPreference(data: ProductResearched[], tenancy: Tenancy): Promise<MercadopagoResponse> {
     // Se monta el cuerpo de la preferencia a enviar a la API de Mercado Pago
     const newPreference: CreateMercadopagoDto = {
       items: data.map((el) => ({
@@ -26,7 +38,7 @@ export class PaymentsService {
         unit_price: Number(el.price) - (Number(el.price) * Number((el?.discount || 0) + el.coupon || 0)) / 100,
         id: el.id,
         category_id: el.category,
-        description: el.description,
+        description: el.description
       })),
       auto_return: "approved",
       back_urls: {
@@ -61,7 +73,7 @@ export class PaymentsService {
     }
   }
 
-  async confirmPayment(notification: MercadopagoResponse) {
+  async confirmPayment(notification: any) {
     // Luego de responder la notificación, confirmando su recibimiento, puedes obtener toda la información sobre el evento del tópico payments notificado haciendo un GET al endpoint v1/payments/{id}.
     // https://api.mercadopago.com/v1/payments/{id}
     console.log("mercadopago: ", notification)
