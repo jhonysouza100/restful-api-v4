@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsBoolean, IsNumber, IsArray, ValidateNested, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsDate, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 class BackUrls {
   @ApiProperty({ example: 'https://example.com/success', description: 'URL de éxito' })
@@ -243,7 +243,7 @@ class PaymentMethods {
   default_payment_method_id?: string;
 }
 
-export class CreateMercadopagoDto {
+export class CreateMercadopagoPreferenceInterface {
   @ApiProperty({ example: 'approved', description: 'Tipo de retorno automático' })
   @IsOptional()
   @IsString()

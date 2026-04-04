@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { MercadopagoResponse } from './interfaces/mercadopago-response.interface';
+import { CreateMercadopagoPreferenceDto } from './dto/create-mercadopago-preference.dto';
 
 @Controller('payments')
 export class PaymentsController {
@@ -24,9 +25,9 @@ export class PaymentsController {
   @Post('mercadopago/preference')
   @ApiOperation({ summary: 'Crear preferencia de pago en Mercado Pago', description: 'Crea una preferencia de pago en Mercado Pago con los productos investigados y la información de la empresa. Devuelve la respuesta de Mercado Pago con los detalles de la preferencia creada.' })
   @ApiBody({ description: 'Datos necesarios para crear una preferencia de pago en Mercado Pago, incluyendo los productos investigados y la información de la empresa.' })
-  async createMercadopagoPreference(@Body() body: { products: any[], tenancy: { api_key: string, domain: string, company: string } }): Promise<MercadopagoResponse> {
+  async createMercadopagoPreference(@Body() body: CreateMercadopagoPreferenceDto): Promise<MercadopagoResponse> {
     try {
-      return await this.paymentsService.createMercadopagoPreference(body.products, body.tenancy);
+      return await this.paymentsService.createMercadopagoPreference(body);
     } catch (error) {
       throw new Error(`Error al crear la preferencia de pago en Mercado Pago: ${error.message}`);
     }
