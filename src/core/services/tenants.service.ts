@@ -1,9 +1,10 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TenantEntity } from '../entities/tenant.entity';
 import { hashPassword } from '../../common/utils/bcrypt.util';
-import { CreateTenantDto, UpdateTenantDto } from '../dtos/tenant.dto';
+import { CreateTenantDto } from '../dtos/create-tenant.dto';
+import { TenantEntity } from '../entities/tenant.entity';
+import { UpdateTenantDto } from 'src/core/dtos/update-tenant.dto';
 
 @Injectable()
 export class TenantsService {
@@ -15,14 +16,14 @@ export class TenantsService {
   async findByDomain(domain: string): Promise<TenantEntity | null> {
     return  await this.tenantRepository.findOne({
       where: { domain, isActive: true },
-      select: ['id', 'email', 'name', 'spreadsheets', 'mercadopago', 'company']
+      select: ['id', 'email', 'name', 'company', 'private_keys']
     });
   }
 
   async findByApiKey(apiKey: string): Promise<TenantEntity | null> {
     return await this.tenantRepository.findOne({
-      where: { apiKey, isActive: true },
-      select: ['id', 'email', 'name', 'spreadsheets', 'mercadopago', 'company']
+      where: { access_keys: { x_api_key: apiKey }, isActive: true },
+      select: ['id', 'email', 'name', 'company', 'private_keys']
     });
   }
 
@@ -80,7 +81,7 @@ export class TenantsService {
     
     // Verifica email único
     await this.tenantRepository.find(
-      { where: { email: { user: email }} }).then((user) => {
+      { where: { email }}).then((user) => {
       if (user.length > 0) {
         throw new HttpException(`El correo electrónico ya exíste`, HttpStatus.BAD_REQUEST);
       }
@@ -99,8 +100,12 @@ export class TenantsService {
    */
   async create(data: CreateTenantDto) {
     // Verificamos si el usuario ya existe
-    await this.verifyUnique(data.name, data.email.user)
+    await this.verifyUnique(data.name, data.email)
     
+    if(!data.password) {
+      return await this.tenantRepository.save(this.tenantRepository.create(data));
+    }
+
     // Encriptamos la contraseña con bcrypt
     const hashedPassword = await hashPassword(data.password);
 
@@ -123,7 +128,7 @@ export class TenantsService {
    */
   async update(id: number, data: UpdateTenantDto): Promise<void> {
     // Verificamos si el nombre y el correo electrónico son únicos
-    if(data.name || data.email) await this.verifyUnique(data?.name, data?.email?.user);
+    if(data.name || data.email) await this.verifyUnique(data?.name, data?.email);
 
     // Si se proporciona contraseña nueva, la encriptamos
     if(data.password) {

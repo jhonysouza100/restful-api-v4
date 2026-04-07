@@ -163,11 +163,11 @@ Flujo:
 
 Gestiona el contexto del tenant actual en ese request:
 ```typescript
-setTenantCredentials(data)        // Establece datos del tenant
+setTenantData(data)        // Establece datos del tenant
 getTenantId()                     // Obtiene ID
-getTenantEmail()                  // Obtiene credenciales email
 getTenantDomain()                 // Obtiene dominio
 getTenantCompany()                // Obtiene empresa
+getTenantSMTP()                  // Obtiene credenciales email
 getTenantSpreadsheets()           // Obtiene ID Google Sheets
 getTanantMercadopago()            // Obtiene token Mercadopago
 ```
@@ -199,11 +199,11 @@ Headers: x-api-key: abc123xyz...
 
 ### Acceder Datos del Tenant Actual (desde un Servicio)
 ```typescript
-constructor(private tenantCtx: TenantContextService) {}
+constructor(private tenantContextService: TenantContextService) {}
 
 async sendEmail() {
-  const tenantId = this.tenantCtx.getTenantId();
-  const email = this.tenantCtx.getTenantEmail();
+  const tenantId = this.tenantContextService.getTenantId();
+  const email = this.tenantContextService.getTenantSMTP();
   // Usa estos datos...
 }
 ```

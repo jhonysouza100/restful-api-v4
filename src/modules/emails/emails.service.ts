@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { EmailCredentialsDto } from 'src/core/dtos/tenant.dto';
 import { TenantContextService } from 'src/core/services/tenant-context.service';
 import { SendEmailDto } from 'src/modules/emails/dtos/send-mail.dto';
 
@@ -8,8 +7,8 @@ import { SendEmailDto } from 'src/modules/emails/dtos/send-mail.dto';
 export class EmailsService {
   constructor(private readonly tenantContextService: TenantContextService) {}
 
-  private getTenantEmail(): EmailCredentialsDto {
-    return this.tenantContextService.getTenantEmail();
+  private getTenantSMTP(): { user: string, pass: string } {
+    return this.tenantContextService.getTenantSMTP();
   }
 
   async sendMail(data: SendEmailDto) {
@@ -18,14 +17,14 @@ export class EmailsService {
       service: 'gmail',
       secure: true,
       auth: {
-        user: this.getTenantEmail().user,
-        pass: this.getTenantEmail().pass
+        user: this.getTenantSMTP().user,
+        pass: this.getTenantSMTP().pass
       }
     });
 
     try {
       const response = await transporter.sendMail({
-        from: `"${data.from}" <${this.getTenantEmail().user}>`,
+        from: `"${data.from}" <${this.getTenantSMTP().user}>`,
         to: data.to,
         attachments: [...data.attachments || []],
         subject: data.subject,

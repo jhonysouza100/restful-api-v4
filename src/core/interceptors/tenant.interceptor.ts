@@ -11,7 +11,7 @@ export class TenantInterceptor implements NestInterceptor {
     const tenant = request.tenant;
 
     if (tenant) {
-      this.tenantContextService.setTenantCredentials(tenant);
+      this.tenantContextService.setTenantData(tenant);
     }
 
     return next.handle();

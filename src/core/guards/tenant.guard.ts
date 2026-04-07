@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { TenantEntity } from 'src/core/entities/tenant.entity';
 import { TenantContextService } from 'src/core/services/tenant-context.service';
 import { TenantsService } from 'src/core/services/tenants.service';
@@ -38,7 +38,7 @@ export class TenantGuard implements CanActivate {
 
     // Guarda las credenciales del tenant en el servicio de contexto
     // Otros servicios pueden acceder al tenant actual inyectando TenantContextService
-    this.tenantContextService.setTenantCredentials(tenant);
+    this.tenantContextService.setTenantData(tenant);
 
     // No se esta usando, !!! Su implementacion requiere acceder a los request en todos los endpoints (Mucho codigo).
     request.tenant = tenant;
