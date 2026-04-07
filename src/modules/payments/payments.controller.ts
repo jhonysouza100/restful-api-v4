@@ -1,8 +1,8 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
-import { PaymentsService } from './payments.service';
-import { MercadopagoResponse } from './interfaces/mercadopago-response.interface';
 import { CreateMercadopagoPreferenceDto } from './dto/create-mercadopago-preference.dto';
+import { MercadopagoResponseInterface } from './interfaces/mercadopago-response.interface';
+import { PaymentsService } from './payments.service';
 
 @Controller('payments')
 export class PaymentsController {
@@ -13,10 +13,10 @@ export class PaymentsController {
   @ApiOkResponse({
     description: 'Mercadopago espera una respuesta para validar que esa recepción fue correcta. Para eso, debes devolver un HTTP STATUS 200 (OK) o 201 (CREATED).',
   })
-  @ApiBody({ type: MercadopagoResponse, description: 'La notificación será enviada con formato JSON atraves de la plataforma de Mercado Pago' })
+  @ApiBody({ type: MercadopagoResponseInterface, description: 'La notificación será enviada con formato JSON atraves de la plataforma de Mercado Pago' })
   confirmPayment(@Body() notification: any) {
     try {
-      return this.paymentsService.confirmPayment(notification)
+      return this.paymentsService.confirmMercadopagoPayment(notification)
     } catch (error) {
       return error.message
     }
@@ -25,7 +25,7 @@ export class PaymentsController {
   @Post('mercadopago/preference')
   @ApiOperation({ summary: 'Crear preferencia de pago en Mercado Pago', description: 'Crea una preferencia de pago en Mercado Pago con los productos investigados y la información de la empresa. Devuelve la respuesta de Mercado Pago con los detalles de la preferencia creada.' })
   @ApiBody({ description: 'Datos necesarios para crear una preferencia de pago en Mercado Pago, incluyendo los productos investigados y la información de la empresa.' })
-  async createMercadopagoPreference(@Body() body: CreateMercadopagoPreferenceDto): Promise<MercadopagoResponse> {
+  async createMercadopagoPreference(@Body() body: CreateMercadopagoPreferenceDto): Promise<MercadopagoResponseInterface> {
     try {
       return await this.paymentsService.createMercadopagoPreference(body);
     } catch (error) {

@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class MercadopagoResponse {
+export class MercadopagoResponseInterface {
   @ApiProperty({
     description: 'ID de la notificación',
     example: 12345

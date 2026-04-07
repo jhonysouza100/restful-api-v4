@@ -16,7 +16,7 @@ Content-Type: application/json
     }
   ],
   "tenancy": {
-    "api_key": "APP_USR-51530335254561-062622-f5a09558be0a1ce7042a5bc5a5d9d389-280626182",
+    "api_key": "APP_USR-8274839262963894-032900-6f9d88f73d5ae9e61f886f8ea5b250e3-2517431499",
     "domain": "https://tu-dominio.com",
     "company": "ChillHop Studio"
   }
@@ -24,3 +24,8 @@ Content-Type: application/json
 
 ### Consultar una preferecia creada en Mercado Pago
 GET https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=280626182-bbf2bf35-7ec4-4cee-b57e-56228269f53e
+
+
+### Consultar un pago creado en Mercado Pago (HTTP request con Bearer)
+GET https://api.mercadopago.com/v1/payments/152598828503
+Authorization: Bearer APP_USR-8274839262963894-032900-6f9d88f73d5ae9e61f886f8ea5b250e3-2517431499
