@@ -1,9 +1,9 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, } from  '@nestjs/common';
-import { ApiCreatedResponse, ApiHeader, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse, } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, } from '@nestjs/common';
+import { ApiCreatedResponse, ApiHeader, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { TenantGuard } from '../../core/guards/tenant.guard';
+import { SendEmailDto } from './dtos/send-mail.dto';
 import { EmailsService } from './emails.service';
 import { EmailCreatedResponse, EmailErrorResponse } from './interfaces/emails-response.interface';
-import { SendEmailDto } from './dtos/send-mail.dto';
-import { TenantGuard } from 'src/core/guards/tenant.guard';
 
 @ApiTags('Emails')
 @ApiHeader({

@@ -1,7 +1,7 @@
 import { ApiProperty, PartialType } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsOptional, IsString } from "class-validator";
-import { CreateTenantDto } from "src/core/dtos/create-tenant.dto";
+import { CreateTenantDto } from "../dtos/create-tenant.dto";
 
 export class CreatePrivateKeysDto {
   @ApiProperty({

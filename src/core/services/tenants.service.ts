@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { hashPassword } from '../../common/utils/bcrypt.util';
 import { CreateTenantDto } from '../dtos/create-tenant.dto';
 import { TenantEntity } from '../entities/tenant.entity';
-import { UpdateTenantDto } from 'src/core/dtos/update-tenant.dto';
+import { UpdateTenantDto } from '../dtos/update-tenant.dto';
 
 @Injectable()
 export class TenantsService {

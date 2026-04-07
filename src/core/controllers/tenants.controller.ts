@@ -1,6 +1,6 @@
 import { Body, Controller, Param, ParseIntPipe, Patch } from '@nestjs/common';
+import { UpdateTenantDto } from '../dtos/update-tenant.dto';
 import { TenantsService } from '../services/tenants.service';
-import { UpdateTenantDto } from 'src/core/dtos/update-tenant.dto';
 
 @Controller('tenants')
 export class TenantsController {

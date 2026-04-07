@@ -1,6 +1,6 @@
-import { CreateAccessKeysDto } from 'src/core/dtos/create-tenant.dto';
-import { CreatePrivateKeysDto } from 'src/core/dtos/update-tenant.dto';
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { CreateAccessKeysDto } from '../dtos/create-tenant.dto';
+import { CreatePrivateKeysDto } from '../dtos/update-tenant.dto';
 
 @Entity('tenants')
 export class TenantEntity {
