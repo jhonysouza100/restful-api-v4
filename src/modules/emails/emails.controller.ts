@@ -1,6 +1,6 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiCreatedResponse, ApiHeader, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { TenantGuard } from '../../core/guards/tenant.guard';
+import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { SendEmailDto } from './dtos/send-mail.dto';
 import { EmailsService } from './emails.service';
 import { EmailCreatedResponse, EmailErrorResponse } from './interfaces/emails-response.interface';
@@ -11,7 +11,7 @@ import { EmailCreatedResponse, EmailErrorResponse } from './interfaces/emails-re
   description: 'API Key (optional if using domain)',
   required: false,
 })
-@UseGuards(TenantGuard)
+@UseTenantGuard()
 @Controller('emails')
 export class EmailsController {
   constructor(private readonly emailsService: EmailsService) {}
@@ -28,6 +28,10 @@ export class EmailsController {
     type: EmailErrorResponse
   })
   async sendMail(@Body() data: SendEmailDto) {
-    return await this.emailsService.sendMail(data);
+    try {
+      return await this.emailsService.sendMail(data);
+    } catch (error) {
+      return error.message;
+    }
   }
 }

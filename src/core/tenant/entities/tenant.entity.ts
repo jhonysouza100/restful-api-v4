@@ -1,4 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Role } from '../../../common/enums/roles.enum';
 import { CreateAccessKeysDto } from '../dtos/create-tenant.dto';
 import { CreatePrivateKeysDto } from '../dtos/update-tenant.dto';
 
@@ -22,11 +23,8 @@ export class TenantEntity {
   @Column({ type: 'varchar', length: 510, nullable: true })
   picture: string;
 
-  // @Column({ type: 'enum', enum: Role, default: Role.CUSTOMER })
-  // role: Role;
-
-  @Column({ type: 'varchar', nullable: true })
-  role: string;
+  @Column({ type: 'enum', enum: Role, default: Role.ADMIN })
+  role: Role;
 
   @Column({ type: 'boolean', nullable: true, default: false })
   verified: boolean;

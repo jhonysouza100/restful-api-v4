@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsEmail, IsNotEmpty, IsOptional, IsString, Length } from "class-validator";
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Length } from "class-validator";
+import { Role } from "../../../common/enums/roles.enum";
 
 export class CreateAccessKeysDto {
   @ApiProperty({
@@ -61,14 +62,11 @@ export class CreateTenantDto {
   @IsOptional()
   @IsString()
   picture?: string;
-
-  @ApiProperty({
-    description: 'Rol del tenant',
-    example: 'admin',
-  })
+  
+  @ApiProperty({ description: 'El ROL del un tenant', example: Role.ADMIN })
   @IsOptional()
-  @IsString()
-  role?: string;
+  @IsEnum(Role)
+  role?: Role;
 
   @ApiProperty({
     description: 'Indica si el tenant está verificado',

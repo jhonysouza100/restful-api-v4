@@ -2,9 +2,9 @@ import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestj
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { hashPassword } from '../../common/utils/bcrypt.util';
-import { CreateTenantDto } from '../dtos/create-tenant.dto';
-import { TenantEntity } from '../entities/tenant.entity';
-import { UpdateTenantDto } from '../dtos/update-tenant.dto';
+import { CreateTenantDto } from './dtos/create-tenant.dto';
+import { UpdateTenantDto } from './dtos/update-tenant.dto';
+import { TenantEntity } from './entities/tenant.entity';
 
 @Injectable()
 export class TenantsService {
@@ -52,7 +52,7 @@ export class TenantsService {
    * @returns TenantEntity con: id, name, email, picture, role, password
    * @throws HttpException si no existe
    */
-  async findByName(param: string) {
+  async findOneByName(param: string): Promise<TenantEntity> {
     const user = await this.tenantRepository.findOne({
       where: {name: param},
       // Retorna solo password para autenticación

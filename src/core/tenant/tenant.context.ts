@@ -1,5 +1,5 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { CreatePrivateKeysDto } from '../dtos/update-tenant.dto';
+import { CreatePrivateKeysDto } from './dtos/update-tenant.dto';
 
 /**
  * TenantContextService

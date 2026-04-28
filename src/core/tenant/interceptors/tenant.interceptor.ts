@@ -1,6 +1,6 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { TenantContextService } from '../services/tenant-context.service';
+import { TenantContextService } from '../tenant.context';
 
 @Injectable()
 export class TenantInterceptor implements NestInterceptor {
@@ -17,3 +17,5 @@ export class TenantInterceptor implements NestInterceptor {
     return next.handle();
   }
 }
+
+// NO SE ESTA USANDO, EXPANDIR

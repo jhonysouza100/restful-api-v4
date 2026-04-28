@@ -1,11 +1,16 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { env } from './common/config/env.config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmailsModule } from './modules/emails/emails.module';
+import { ThrottlerBehindProxyGuard } from './common/guards/trottler.guard';
 import { CoreModule } from './core/core.module';
+import { EmailsModule } from './modules/emails/emails.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { ProductsModule } from './modules/products/products.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -19,9 +24,19 @@ import { PaymentsModule } from './modules/payments/payments.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 1000,
+          limit: 2,
+        },
+      ],
+    }),
     EmailsModule,
     CoreModule,
     PaymentsModule,
+    ProductsModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -30,6 +45,10 @@ import { PaymentsModule } from './modules/payments/payments.module';
       provide: 'CONFIG',
       useValue: env,
     },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerBehindProxyGuard
+    }
   ],
 })
 export class AppModule {}

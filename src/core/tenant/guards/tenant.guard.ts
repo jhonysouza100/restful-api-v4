@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { TenantEntity } from '../entities/tenant.entity';
-import { TenantContextService } from '../services/tenant-context.service';
-import { TenantsService } from '../services/tenants.service';
+import { TenantContextService } from '../tenant.context';
+import { TenantsService } from '../tenants.service';
 
 /**
  * TenantGuard

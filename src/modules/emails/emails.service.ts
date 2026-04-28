@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { TenantContextService } from '../../core/services/tenant-context.service';
+import { TenantContextService } from '../../core/tenant/tenant.context';
 import { SendEmailDto } from './dtos/send-mail.dto';
 
 @Injectable()

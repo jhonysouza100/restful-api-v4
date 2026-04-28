@@ -1,17 +1,27 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TenantEntity } from './entities/tenant.entity';
-import { TenantContextService } from './services/tenant-context.service';
-import { TenantsService } from './services/tenants.service';
-import { TenantGuard } from './guards/tenant.guard';
-import { TenantInterceptor } from './interceptors/tenant.interceptor';
-import { TenantsController } from './controllers/tenants.controller';
+import { jwtConstants } from '../common/constants';
+import { TenantEntity } from './tenant/entities/tenant.entity';
+import { TenantInterceptor } from './tenant/interceptors/tenant.interceptor';
+import { TenantContextService } from './tenant/tenant.context';
+import { TenantsController } from './tenant/tenants.controller';
+import { TenantsService } from './tenant/tenants.service';
+import { AuthController } from './auth/auth.controller';
+import { JwtModule, JwtService } from '@nestjs/jwt';
+import { AuthService } from './auth/auth.service';
+import { AuthContextRequest } from './auth/auth.context';
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([TenantEntity])],
-  providers: [TenantContextService, TenantsService, TenantGuard, TenantInterceptor],
-  exports: [TenantContextService, TenantsService, TenantGuard, TenantInterceptor],
-  controllers: [TenantsController],
+  imports: [
+    JwtModule.register({
+      secret: jwtConstants.secret,
+      signOptions: { expiresIn: '1d'}
+    }),
+    TypeOrmModule.forFeature([TenantEntity]),
+  ],
+  controllers: [TenantsController, AuthController],
+  providers: [TenantContextService, TenantsService, TenantInterceptor, AuthService, AuthContextRequest, JwtService],
+  exports: [TenantContextService, TenantsService, TenantInterceptor, AuthContextRequest, JwtService]
 })
 export class CoreModule {}
