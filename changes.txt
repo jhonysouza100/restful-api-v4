@@ -1,0 +1,30 @@
+feat: add products service with CRUD operations and image uploads
+
+- Implemented ProductsService for managing product creation, retrieval, updating, and deletion.
+- Integrated image upload functionality using Cloudinary.
+- Added DTOs for creating and updating products.
+- Implemented pagination and filtering for product listings.
+- Added error handling for product operations.
+
+feat: create MiCorreo shipment DTOs and service
+
+- Added DTOs for generating MiCorreo rates and importing shipments.
+- Implemented ShipmentsService to handle rate generation and shipment import.
+- Integrated MiCorreo API for fetching rates and importing shipments.
+- Added validation and error handling for shipment operations.
+
+feat: add agency and delivery type enums
+
+- Created AgencyIconEnum for agency icons.
+- Created DeliveryTypeEnum for delivery types.
+
+feat: implement uploads module and service
+
+- Added UploadsService for handling image uploads to Cloudinary.
+- Created interfaces for Cloudinary image responses.
+- Integrated image deletion functionality.
+
+docs: update shipment API documentation
+
+- Added detailed API documentation for MiCorreo shipment operations.
+- Included examples for generating rates and importing shipments.
