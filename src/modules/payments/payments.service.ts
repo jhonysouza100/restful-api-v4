@@ -16,6 +16,7 @@ export class PaymentsService {
         title: el.title,
         quantity: Number(el.quantity),
         unit_price: el.price_with_discounts,
+        currency_id: "ARS",
         category_id: el.category,
         description: el.description,
         picture_url: el.picture_url,
