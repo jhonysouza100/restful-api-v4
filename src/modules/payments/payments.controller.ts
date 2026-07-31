@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpException, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { CreateMercadopagoPreferenceDto } from './dto/create-mercadopago-preference.dto';
 import { MercadopagoPreferenceCreatedPayload } from './interfaces/mercadopago-preference-created.interface';
@@ -15,7 +15,7 @@ export class PaymentsController {
     try {
       return await this.paymentsService.createMercadopagoPreference(body);
     } catch (error: any) {
-      throw new Error(`Error al crear la preferencia de pago en Mercado Pago: ${error.message}`);
+      throw new HttpException(`${error.message}`, error.status)
     }
   }
 }

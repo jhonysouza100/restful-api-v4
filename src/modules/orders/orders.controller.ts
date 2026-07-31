@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpException, Post } from '@nestjs/common';
 import { ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { MercadopagoWebhookPayload } from '../payments/interfaces/mercadopago-webhook.interface';
@@ -15,11 +15,11 @@ export class OrdersController {
   @ApiHeader({ name: 'x-api-key', description: 'API Key (optional if using domain)', required: false })
   @ApiOperation({ summary: 'Crear una nueva orden', description: 'Crea una nueva orden en el sistema con los items de un carrito.' })
   @ApiBody({ type: CreateOrderDto, description: 'Datos para crear una nueva orden de compra con los items de un carrito.' })
-  async createOrder(@Body() orderData: CreateOrderDto) {
+  createOrder(@Body() orderData: CreateOrderDto) {
     try {
-      return await this.ordersService.createOrder(orderData);
+      return this.ordersService.createOrder(orderData);
     } catch (error: any) {
-      throw new Error(`${error.message}`, { cause: error.status })
+      throw new HttpException(`${error.message}`, error.status)
     }
   }
 
@@ -34,7 +34,7 @@ export class OrdersController {
     try {
       return this.ordersService.confirmMercadopagoPayment(notification)
     } catch (error: any) {
-      throw new Error(`${error.message}`, { cause: error.status })
+      throw new HttpException(`${error.message}`, error.status)
     }
   }
 }
