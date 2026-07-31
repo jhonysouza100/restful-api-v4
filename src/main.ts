@@ -2,8 +2,8 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module';
 import { v2 as cloudinary } from 'cloudinary';
+import { AppModule } from './app.module';
 import { env } from './common/config/env.config';
 
 // Configuración de Cloudinary
@@ -26,7 +26,7 @@ async function bootstrap() {
   app.enableCors({
     origin: '*',
     credentials: true, // Permite cookies
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
   });
   

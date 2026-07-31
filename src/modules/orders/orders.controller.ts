@@ -1,4 +1,4 @@
-import { Body, Controller, HttpException, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { MercadopagoWebhookPayload } from '../payments/interfaces/mercadopago-webhook.interface';
@@ -19,7 +19,7 @@ export class OrdersController {
     try {
       return await this.ordersService.createOrder(orderData);
     } catch (error: any) {
-      throw new HttpException(`${error.message}`, error.status)
+      throw new Error(`${error.message}`, { cause: error.status })
     }
   }
 
@@ -34,7 +34,7 @@ export class OrdersController {
     try {
       return this.ordersService.confirmMercadopagoPayment(notification)
     } catch (error: any) {
-      throw new HttpException(`${error.message}`, error.status)
+      throw new Error(`${error.message}`, { cause: error.status })
     }
   }
 }

@@ -27,7 +27,6 @@ export class PaymentsService {
         failure: `${data.back_urls?.failure || `${data.tenant.domain}/payment/failure`}`,
         pending: `${data.back_urls?.pending || `${data.tenant.domain}/payment/pending`}`,
       },
-      // external_reference: data.order_id.toString(),
       external_reference: data.order_id.toString(),
       notification_url: `${env.SERVER_URL}/api/v1/orders/confirm/mercadopago`,
       statement_descriptor: `${data.tenant.company}`,
