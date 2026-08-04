@@ -285,6 +285,14 @@ export class OrdersService {
             topic: `${OrderTopicEnum.NUEVA_VENTA}`,
             order: orderSearched
           });
+
+          await this.notificationCustomerByEmail({
+            user: { email: tenantSearched?.email as string, pass: tenantSearched?.private_keys.smtp as string },
+            from: `${tenantSearched?.company}`,
+            to: orderSearched.shipment?.email || "",
+            topic: `${OrderTopicEnum.PAGO_APROBADO}`,
+            order: orderSearched
+          })
         }
       }
     }
@@ -403,13 +411,17 @@ export class OrdersService {
       </tr>
     `).join('');
 
+    const subtotal = Number(data.order?.subtotal ?? 0);
+    const shippingCost = Number(data.order?.shipment?.shipment_cost ?? 0);
+    const totalWithShipping = subtotal + shippingCost;
+
     const shipmentContent = data.order?.shipment
       ? `
         <p style="margin: 4px 0;"><strong>Destinatario:</strong> ${data.order.shipment.fullName || 'No informado'}</p>
         <p style="margin: 4px 0;"><strong>Correo:</strong> ${data.order.shipment.email || 'No informado'}</p>
         <p style="margin: 4px 0;"><strong>Teléfono:</strong> ${data.order.shipment.phone || 'No informado'}</p>
         <p style="margin: 4px 0;"><strong>Dirección:</strong> ${data.order.shipment.streetName || ''} ${data.order.shipment.streetNumber || ''}, ${data.order.shipment.city || ''}</p>
-        <p style="margin: 4px 0;"><strong>Tipo de entrega:</strong> ${data.order.shipment.deliveredType || 'No informado'}</p>
+        <p style="margin: 4px 0;"><strong>Tipo de entrega:</strong> ${data.order.shipment.deliveredType === 'D' ? 'Entrega en Domicilio' : data.order.shipment.deliveredType === 'S' ? 'Retiro en Sucursal' : 'No informado'}</p>
         <p style="margin: 4px 0;"><strong>Costo de envío:</strong> $${Number(data.order.shipment.shipment_cost ?? 0).toFixed(2)}</p>
       `
       : '<p style="margin: 4px 0;">No hay datos de envío para esta orden.</p>';
@@ -417,9 +429,9 @@ export class OrdersService {
     const paymentContent = data.order?.payment
       ? `
         <p style="margin: 4px 0;"><strong>Método:</strong> ${data.order.payment.method || 'No informado'}</p>
-        <p style="margin: 4px 0;"><strong>Estado:</strong> ${data.order.payment.status || 'No informado'}</p>
-        <p style="margin: 4px 0;"><strong>Detalle:</strong> ${data.order.payment.status_detail || 'No informado'}</p>
-        <p style="margin: 4px 0;"><strong>URL de pago:</strong> <a href="${data.order.payment.payment_url || '#'}" style="color: #2563eb;">${data.order.payment.payment_url || 'Sin enlace'}</a></p>
+        <p style="margin: 4px 0;"><strong>Subtotal:</strong> $${subtotal.toFixed(2)}</p>
+        <p style="margin: 4px 0;"><strong>Envío:</strong> $${shippingCost.toFixed(2)}</p>
+        <p style="margin: 4px 0;"><strong>Total general:</strong> $${totalWithShipping.toFixed(2)}</p>
       `
       : '<p style="margin: 4px 0;">No hay datos de pago para esta orden.</p>';
 
@@ -475,6 +487,101 @@ export class OrdersService {
     await this.emailsService.sendMail(mail, [], {
       pass: env.SMTP_PASS,
       user: env.SMTP_USER
+    });
+  }
+
+  private async notificationCustomerByEmail(data: {
+    user: { pass: string, email: string },
+    from: string,
+    to: string,
+    topic: string,
+    order: Order,
+  }) {
+    const orderDate = data.order?.createdAt
+      ? new Date(data.order.createdAt).toLocaleString('es-AR', {
+          dateStyle: 'long',
+          timeStyle: 'short',
+        })
+      : 'No disponible';
+
+    const itemsRows = (data.order?.items ?? []).map((item) => `
+      <tr>
+        <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${item.name}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">$${Number(item.price).toFixed(2)}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">$${Number(item.subtotal).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    const subtotal = Number(data.order?.subtotal ?? 0);
+    const shippingCost = Number(data.order?.shipment?.shipment_cost ?? 0);
+    const totalWithShipping = subtotal + shippingCost;
+
+    const shipmentContent = data.order?.shipment
+      ? `
+        <p style="margin: 4px 0;"><strong>Destinatario:</strong> ${data.order.shipment.fullName || 'No informado'}</p>
+        <p style="margin: 4px 0;"><strong>Correo:</strong> ${data.order.shipment.email || 'No informado'}</p>
+        <p style="margin: 4px 0;"><strong>Teléfono:</strong> ${data.order.shipment.phone || 'No informado'}</p>
+        <p style="margin: 4px 0;"><strong>Dirección:</strong> ${data.order.shipment.streetName || ''} ${data.order.shipment.streetNumber || ''}, ${data.order.shipment.city || ''}</p>
+        <p style="margin: 4px 0;"><strong>Tipo de entrega:</strong> ${data.order.shipment.deliveredType === 'D' ? 'Entrega en Domicilio' : data.order.shipment.deliveredType === 'S' ? 'Retiro en Sucursal' : 'No informado'}</p>
+        <p style="margin: 4px 0;"><strong>Costo de envío:</strong> $${shippingCost.toFixed(2)}</p>
+      `
+      : '<p style="margin: 4px 0;">No hay datos de envío para esta orden.</p>';
+
+    const paymentContent = data.order?.payment
+      ? `
+        <p style="margin: 4px 0;"><strong>Método:</strong> ${data.order.payment.method || 'No informado'}</p>
+        <p style="margin: 4px 0;"><strong>Subtotal:</strong> $${subtotal.toFixed(2)}</p>
+        <p style="margin: 4px 0;"><strong>Envío:</strong> $${shippingCost.toFixed(2)}</p>
+        <p style="margin: 4px 0;"><strong>Total general:</strong> $${totalWithShipping.toFixed(2)}</p>
+      `
+      : '<p style="margin: 4px 0;">No hay datos de pago para esta orden.</p>';
+
+    const mail: SendEmailDto = {
+      from: `${data.from}`,
+      subject: data.topic,
+      to: [`${data.to}`],
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; color: #111827;">
+          <div style="background: #111827; color: #ffffff; padding: 24px;">
+            <h2 style="margin: 0; font-size: 24px;">${data.topic}</h2>
+            <p style="margin: 6px 0 0;">Orden #${data.order?.id ?? 'N/A'} • ${orderDate}</p>
+          </div>
+          <div style="padding: 24px; background: #ffffff;">
+            <p style="margin: 0 0 8px;">Hola,</p>
+            <p style="margin: 0 0 16px;">Tu compra se realizó con éxito. Estos son los detalles de tu pedido:</p>
+
+            <h3 style="margin: 0 0 8px;">Productos</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+              <thead>
+                <tr style="background: #f3f4f6; text-align: left;">
+                  <th style="padding: 8px; border-bottom: 1px solid #e5e7eb;">Producto</th>
+                  <th style="padding: 8px; border-bottom: 1px solid #e5e7eb;">Cant.</th>
+                  <th style="padding: 8px; border-bottom: 1px solid #e5e7eb;">Precio</th>
+                  <th style="padding: 8px; border-bottom: 1px solid #e5e7eb;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsRows || '<tr><td colspan="4" style="padding: 8px;">No hay productos disponibles.</td></tr>'}
+              </tbody>
+            </table>
+
+            <h3 style="margin: 0 0 8px;">Envío</h3>
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+              ${shipmentContent}
+            </div>
+
+            <h3 style="margin: 0 0 8px;">Pago</h3>
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px;">
+              ${paymentContent}
+            </div>
+          </div>
+        </div>
+      `
+    };
+    await this.emailsService.sendMail(mail, [], {
+      pass: data.user.pass,
+      user: data.user.email
     });
   }
 }

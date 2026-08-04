@@ -17,7 +17,6 @@ export class EmailsService {
       pass: string
     }) {
 
-      console.log(credentials)
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       secure: true,
