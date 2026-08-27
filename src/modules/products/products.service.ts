@@ -20,7 +20,7 @@ export class ProductsService {
 
   async create(createProductDto: CreateProductDto, files: Express.Multer.File[]) {
     if (files && files.length > 0) {
-      const uploadedImages = await this.uploadsService.uploadImages(files, `products/${this.tenantContextService.getTenantCompany()}`);
+      const uploadedImages = await this.uploadsService.uploadImages(files, `products/${this.authContextRequest.getAuthCompany()}`);
       createProductDto.images = uploadedImages;
     }
 

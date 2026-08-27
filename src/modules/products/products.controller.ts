@@ -38,8 +38,6 @@ export class ProductsController {
 
   @Post()
   @UseRoleAuthToken(Role.ADMIN)
-  @UseTenantGuard()
-  @ApiHeader({ name: 'x-api-key', description: 'API Key (optional if using domain)', required: false })
   @ApiOperation({ summary: 'Crear producto', description: 'Permite a un administrador crear un nuevo producto en el sistema.' })
   @ApiConsumes('multipart/form-data')
   /**
