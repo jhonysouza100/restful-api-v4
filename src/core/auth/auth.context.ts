@@ -4,17 +4,23 @@ import { Injectable, Scope } from "@nestjs/common";
 export class AuthContextRequest {
   private authData: {
     id: number,
+    company: string
   }
 
   setAuthData(data: {
-    id: number,
+    id: number, company: string
   }): void {
     this.authData = {
       id: data.id,
+      company: data.company
     }
   }
 
   getAuthId(): number {
     return this.authData.id;
+  }
+
+  getAuthCompany(): string {
+    return this.authData.company
   }
 }

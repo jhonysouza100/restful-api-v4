@@ -69,7 +69,7 @@ export class TenantsService {
     const user = await this.tenantRepository.findOne({
       where: {name: param},
       // Retorna solo password para autenticación
-      select: ['id', 'name', 'email', 'picture', 'role', 'password'],
+      select: ['id', 'name', 'email', 'picture', 'role', 'password', 'company'],
     });
     if (!user) {
       throw new HttpException(`Usuario no encontrado`, HttpStatus.NOT_FOUND);

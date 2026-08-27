@@ -203,7 +203,7 @@ export class ProductsService {
     await this.productsRepo.update(id, data);
 
     if (files && files.length > 0) {
-      const uploadedImages = await this.uploadsService.uploadImages(files, `products/${this.tenantContextService.getTenantCompany()}`);
+      const uploadedImages = await this.uploadsService.uploadImages(files, `products/${this.authContextRequest.getAuthCompany()}`);
       // A las imagenes filtradas, las concatenamos con las nuevas
       const newImages = data.images ? [...data.images, ...uploadedImages] : uploadedImages;
       // Actualizamos el producto con las nuevas imágenes

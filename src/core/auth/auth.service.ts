@@ -26,6 +26,7 @@ export class AuthService {
       email: userFound.email,
       role: userFound.role,
       picture: userFound.picture,
+      company: userFound.company
     };
 
     // Genera el token JWT

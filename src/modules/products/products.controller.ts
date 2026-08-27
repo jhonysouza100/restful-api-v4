@@ -3,10 +3,10 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
-import { CreateProductDto } from './dto/create-product.dto';
-import { ProductsService } from './products.service';
-import { UpdateProductDto } from './dto/update-product.dto';
 import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { ProductsService } from './products.service';
 
 @Injectable()
 class ParseJSONPipe implements PipeTransform {
@@ -114,8 +114,6 @@ export class ProductsController {
 
   @Patch(':id')
   @UseRoleAuthToken(Role.ADMIN)
-  @UseTenantGuard()
-  @ApiHeader({ name: 'x-api-key', description: 'API Key (optional if using domain)', required: false })
   @ApiOperation({ summary: 'Actualizar producto', description: 'Actualiza la información del producto identificado por su ID.' })
   @ApiParam({ name: 'id', description: 'Identificador único del producto a actualizar.' })
   @ApiConsumes('multipart/form-data')

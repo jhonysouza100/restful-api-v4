@@ -6,4 +6,5 @@ export interface TokenInterface {
   email: string;
   role: Role;
   picture: string;
+  company: string;
 }
