@@ -136,7 +136,7 @@ export class OrdersService {
         id: 0,
         price_with_discounts: rate,
         quantity: 1,
-        category: ProductCategoryEnum.SERVICES,
+        category: ProductCategoryEnum.OTHER,
         picture_url: AgencyIconEnum.CORREOARGENTINO,
         description: "Costo de envío por Correo Argentino"
       });

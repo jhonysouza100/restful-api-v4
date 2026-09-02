@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 // import { QnA } from './QnA.entity';
 // import { Review } from './review.entity';
 import { ProductCategoryEnum } from '../enums/products.enum';
@@ -15,7 +15,7 @@ export class Product {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   slug: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -24,13 +24,13 @@ export class Product {
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ type: 'enum', enum: ProductCategoryEnum })
+  @Column({ type: 'enum', enum: ProductCategoryEnum, nullable: true, default: ProductCategoryEnum.OTHER })
   category: ProductCategoryEnum;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   brand: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   model: string;
 
   @Column({ type: 'json', nullable: true })
@@ -38,7 +38,7 @@ export class Product {
 
   @Column('simple-json', { nullable: true })
   dimensions: {
-    height: number,                                 
+    height: number,
     length: number,
     weight: number,
     width: number
@@ -85,4 +85,19 @@ export class Product {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  // @ts-ignore - TypeORM lifecycle hook - automatically invoked by TypeORM
+  private generateSlug() {
+    if (this.name) {
+      this.slug = this.name
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-') // Espacios a guiones
+        .replace(/[^a-z0-9-]/g, '') // Solo letras, números, guiones
+        .replace(/-+/g, '-') // Múltiples guiones a uno
+        .replace(/^-+|-+$/g, ''); // Quitar guiones al inicio y final
+    }
+  }
 }

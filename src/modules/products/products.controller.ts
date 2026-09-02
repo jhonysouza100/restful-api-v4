@@ -78,7 +78,7 @@ export class ProductsController {
   
   @Get()
   @ApiOperation({ summary: 'Obtener productos', description: 'Permite obtener una lista de productos con filtros opcionales.' })
-  @ApiParam({ name: 'query', description: 'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.', example: '?category=electronics' })
+  @ApiParam({ name: 'query', description: 'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.', example: '?category=OTHER' })
   findAll(@Query() query?: Record<string, string>) {
     try {
       return this.productsService.findAll(query);

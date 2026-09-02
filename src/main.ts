@@ -26,7 +26,7 @@ async function bootstrap() {
   app.enableCors({
     origin: '*',
     credentials: true, // Permite cookies
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
   });
   

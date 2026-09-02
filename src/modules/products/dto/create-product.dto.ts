@@ -43,23 +43,20 @@ export class CreateProductDto {
   @ApiProperty({ example: 'Laptop', description: 'Nombre del producto' })
   name: string;
   
-  @ApiProperty({ example: 'laptop-intel', description: 'Nombre del producto para SEO' })
-  slug: string;
-  
   @ApiProperty({ example: 'Articulo Varios', description: 'Nombre del producto para ventas secretas' })
   alias?: string;
 
   @ApiProperty({ example: 'Laptop de gama alta', description: 'Descripción del producto' })
   description: string;
   
-  @ApiProperty({ example: ProductCategoryEnum.ELECTRONICS, description: 'Categoría del producto' })
-  category: ProductCategoryEnum;
+  @ApiProperty({ example: ProductCategoryEnum.OTHER, description: 'Categoría del producto' })
+  category?: ProductCategoryEnum;
   
   @ApiProperty({ example: 'MarcaX', description: 'Marca del producto' })
-  brand: string;
+  brand?: string;
 
   @ApiProperty({ example: 'ModeloY', description: 'Modelo del producto' })
-  model: string;
+  model?: string;
 
   @ApiProperty({
     type: () => ProductSpecificationsInterface, 
