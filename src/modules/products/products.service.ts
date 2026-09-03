@@ -19,12 +19,12 @@ export class ProductsService {
   ) { }
 
   async create(createProductDto: CreateProductDto, files: Express.Multer.File[]) {
+    const newProduct = this.productsRepo.create({ ...createProductDto, tenant_id: this.authContextRequest.getAuthId() });
+
     if (files && files.length > 0) {
       const uploadedImages = await this.uploadsService.uploadImages(files, `products/${this.authContextRequest.getAuthCompany()}`);
-      createProductDto.images = uploadedImages;
+      newProduct.images = uploadedImages;
     }
-
-    const newProduct = this.productsRepo.create({ ...createProductDto, tenant_id: this.authContextRequest.getAuthId() });
 
     await this.productsRepo.save(newProduct);
 
@@ -186,7 +186,7 @@ export class ProductsService {
       data.images = data.images.filter((image) => image.public_id !== "temp_id");
     }
 
-    // Antes de guardar el producto, comparamos las images del productFound con las del data para actualizar "Clodinay"
+    // Antes de guardar el producto, comparamos las images del productFound con las del data para actualizar "Cloudinay"
     // Si hay imágenes en el producto encontrado, filtramos las que no están en el nuevo array de imágenes
     if (productFound.images) {
       const imagesToDelete = productFound.images.filter((image) => {
@@ -199,16 +199,16 @@ export class ProductsService {
       }
     }
 
-    // Actualizamos el producto con los nuevos datos
-    await this.productsRepo.update(id, data);
-
     if (files && files.length > 0) {
       const uploadedImages = await this.uploadsService.uploadImages(files, `products/${this.authContextRequest.getAuthCompany()}`);
       // A las imagenes filtradas, las concatenamos con las nuevas
       const newImages = data.images ? [...data.images, ...uploadedImages] : uploadedImages;
-      // Actualizamos el producto con las nuevas imágenes
-      await this.productsRepo.update(id, { images: newImages });
+      // Actualizamos la data con las nuevas imágenes
+      data.images = newImages;
     }
+
+    // Actualizamos el producto con los nuevos datos
+    await this.productsRepo.update(id, data);
 
     throw new HttpException(`${productFound.name} has been updated`, HttpStatus.OK);
   }
