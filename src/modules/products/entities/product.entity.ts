@@ -87,7 +87,6 @@ export class Product {
   updatedAt: Date;
 
   @BeforeInsert()
-  @BeforeUpdate()
   // @ts-ignore - TypeORM lifecycle hook - automatically invoked by TypeORM
   private generateSlug() {
     if (this.name) {

@@ -224,10 +224,24 @@ export class ProductsService {
       // Actualizamos la data con las nuevas imágenes
       data.images = newImages;
     }
+     
+    if (data.name !== undefined) {
+    const slug = data.name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
 
+      await this.productsRepo.update(id, { ...data, slug });
+  
+      throw new HttpException(`${productFound.name} actualizado`, HttpStatus.OK);
+    }
+    
     await this.productsRepo.update(id, data);
 
-    throw new HttpException(`${productFound.name} has been updated`, HttpStatus.OK);
+    throw new HttpException(`${productFound.name} actualizado`, HttpStatus.OK);
   }
 
   async remove(id: number) {
