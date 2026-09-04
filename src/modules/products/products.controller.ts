@@ -1,6 +1,6 @@
 import { BadRequestException, Body, Controller, Delete, Get, Injectable, Param, Patch, PipeTransform, Post, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiTags, ApiQuery, getSchemaPath } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
 import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
@@ -90,7 +90,7 @@ export class ProductsController {
   
   @Get()
   @ApiOperation({ summary: 'Obtener productos', description: 'Permite obtener una lista de productos con filtros opcionales.' })
-  @ApiQuery({ name: 'query', description: 'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.', example: '?q=hello&tenant_id=1' })
+  @ApiQuery({ name: 'q', description: 'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.', example: '?q=hello' })
   findAll(@Query() query?: Record<string, string>) {
     try {
       return this.productsService.findAll(query);

@@ -34,19 +34,19 @@ export class ProductsService {
   async duplicate(ids: number[]) {
     const tenantId = this.authContextRequest.getAuthId();
 
-    try {
-      const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } });
+    const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } });
 
-      const duplicatedProducts = products.map(({ id, createdAt, updatedAt, ...product }) =>
-        this.productsRepo.create({ ...product, tenant_id: tenantId }),
-      );
-
-      await this.productsRepo.save(duplicatedProducts);
-
-      throw new HttpException(`Item duplicado correctamente`, HttpStatus.OK);
-    } catch (error: any) {
-      throw new HttpException('Error al duplicar el item', HttpStatus.BAD_REQUEST);
+    if(products.length === 0) {
+      throw new HttpException(`No se encontraron productos para duplicar`, HttpStatus.NOT_FOUND);
     }
+
+    const duplicatedProducts = products.map(({ id, createdAt, updatedAt, ...product }, index) =>
+      this.productsRepo.create({ ...product, name: `${product.name} (Copia ${index + 1})`, tenant_id: tenantId, images: product.images?.map((image, idx) => ({ ...image, public_id: `copia_${idx + 1}` })) }),
+    );
+
+    await this.productsRepo.save(duplicatedProducts);
+
+    throw new HttpException(`Item duplicado correctamente`, HttpStatus.OK);
   }
 
   async findAll(query: Record<string, string> = {}) {
