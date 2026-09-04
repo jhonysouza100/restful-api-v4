@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ProductCategoryEnum } from '../enums/products.enum';
+import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
+import { ProductCategoryEnum } from '../enums/products.enum';
 
 class ProductImageInterface {
   @ApiProperty({ example: 'imagen123', description: 'ID público de la imagen en el servicio de almacenamiento' })
@@ -29,25 +30,21 @@ class ProductSpecificationsInterface {
 class ProductDimensionsInterface {
   @ApiProperty({ example: 500, description: 'Peso del producto en centimetros'})
   @IsNumber()
-  @IsPositive()
   @IsNotEmpty()
   weight: number;
 
   @ApiProperty({ example: 10, description: 'Altura del producto en centimetros'})
   @IsNumber()
-  @IsPositive()
   @IsNotEmpty()
   height: number;
   
   @ApiProperty({ example: 20, description: 'Ancho del producto en centimetros'})
   @IsNumber()
-  @IsPositive()
   @IsNotEmpty()
   width: number;
   
   @ApiProperty({ example: 1000, description: 'Largo del producto en gramos'})
   @IsNumber()
-  @IsPositive()
   @IsNotEmpty()
   length: number;
 }
@@ -66,6 +63,8 @@ class ProductColorInterface {
 
 export class CreateProductDto {
   @ApiProperty({ example: 'Laptop', description: 'Nombre del producto' })
+  @IsString()
+  @IsNotEmpty()
   name: string;
   
   @ApiProperty({ example: 'Articulo Varios', description: 'Nombre del producto para ventas secretas' })
@@ -95,36 +94,46 @@ export class CreateProductDto {
   model?: string;
 
   @ApiProperty({
+    type: () => ProductSpecificationsInterface, 
+    isArray: true, 
     example: [{ label: 'Conectividad', value: 'USB-C' }], 
     description: 'Lista de especificaciones del producto' 
   })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
+  @Type(() => ProductSpecificationsInterface)
   specifications?: ProductSpecificationsInterface[];
   
   @ApiProperty({
+    type: () => ProductDimensionsInterface,
     example: { height: 500, width: 200, weight: 1000 },
     description: 'Dimensiones del producto'
   })
   @IsOptional()
-  @ValidateNested({ each: true })
+  @ValidateNested()
+  @Type(() => ProductDimensionsInterface)
   dimensions?: ProductDimensionsInterface;
   
   @ApiProperty({ 
+    type: () => ProductImageInterface, 
+    isArray: true, 
     example: [{ public_id: 'imagen123', secure_url: 'https://example.com/imagen.jpg' }], 
     description: 'Lista de imágenes del producto' 
   })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
+  @Type(() => ProductImageInterface)
   images?: ProductImageInterface[];
   
   @ApiProperty({
+    type: () => ProductColorInterface,
     example: { name: 'Rojo', value: '#f00'}
   })
   @IsOptional()
-  @ValidateNested({ each: true })
+  @ValidateNested()
+  @Type(() => ProductColorInterface)
   color?: ProductColorInterface;
   
   @ApiProperty({ example: 999.99, description: 'Precio del producto' })

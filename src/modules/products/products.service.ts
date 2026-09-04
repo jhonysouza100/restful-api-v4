@@ -25,6 +25,14 @@ export class ProductsService {
       const uploadedImages = await this.uploadsService.uploadImages(files, `products/${this.authContextRequest.getAuthCompany()}`);
       newProduct.images = uploadedImages;
     }
+    
+    newProduct.slug = newProduct.name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-') // Espacios a guiones
+      .replace(/[^a-z0-9-]/g, '') // Solo letras, números, guiones
+      .replace(/-+/g, '-') // Múltiples guiones a uno
+      .replace(/^-+|-+$/g, ''); // Quitar guiones al inicio y final
 
     await this.productsRepo.save(newProduct);
 
@@ -36,14 +44,14 @@ export class ProductsService {
 
     try {
       const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } });
-  
+
       const duplicatedProducts = products.map(({ id, createdAt, updatedAt, ...product }) =>
         this.productsRepo.create({ ...product, tenant_id: tenantId }),
       );
-  
+
       await this.productsRepo.save(duplicatedProducts);
-      
-     throw new HttpException(`Item duplicado correctamente`, HttpStatus.OK);
+
+      throw new HttpException(`Item duplicado correctamente`, HttpStatus.OK);
     } catch (error: any) {
       throw new HttpException('Error al duplicar el item', HttpStatus.BAD_REQUEST);
     }
@@ -225,10 +233,15 @@ export class ProductsService {
       data.images = newImages;
     }
 
-     Object.assign(productFound, data);
-    await this.productsRepo.save(productFound);
-    // Actualizamos el producto con los nuevos datos
-    // await this.productsRepo.update(id, data);
+    const slug = (data?.name || productFound.name)
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-') // Espacios a guiones
+      .replace(/[^a-z0-9-]/g, '') // Solo letras, números, guiones
+      .replace(/-+/g, '-') // Múltiples guiones a uno
+      .replace(/^-+|-+$/g, ''); // Quitar guiones al inicio y final
+
+    await this.productsRepo.update(id, {...data, slug});
 
     throw new HttpException(`${productFound.name} has been updated`, HttpStatus.OK);
   }

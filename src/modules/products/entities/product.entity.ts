@@ -1,4 +1,4 @@
-import { BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 // import { QnA } from './QnA.entity';
 // import { Review } from './review.entity';
 import { ProductCategoryEnum } from '../enums/products.enum';
@@ -85,19 +85,4 @@ export class Product {
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @BeforeInsert()
-  @BeforeUpdate()
-  // @ts-ignore - TypeORM lifecycle hook - automatically invoked by TypeORM
-  private generateSlug() {
-    if (this.name) {
-      this.slug = this.name
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, '-') // Espacios a guiones
-        .replace(/[^a-z0-9-]/g, '') // Solo letras, números, guiones
-        .replace(/-+/g, '-') // Múltiples guiones a uno
-        .replace(/^-+|-+$/g, ''); // Quitar guiones al inicio y final
-    }
-  }
 }
