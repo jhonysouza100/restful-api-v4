@@ -252,6 +252,6 @@ export class ProductsService {
       // Se eliminan las imagenes asociadas en Cloudinary
       await this.uploadsService.deleteImage(image.public_id);
     }
-    throw new HttpException(`Se eliminó ${productFound.name} has been removed`, HttpStatus.OK);
+    throw new HttpException(`${productFound.name} eliminado`, HttpStatus.OK);
   }
 }
