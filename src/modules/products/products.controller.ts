@@ -1,7 +1,6 @@
-import { ArgumentMetadata, BadRequestException, Body, Controller, Delete, Get, Injectable, Param, Patch, PipeTransform, Post, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Injectable, Param, Patch, PipeTransform, Post, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
+import { ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiTags, ApiQuery, getSchemaPath } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
 import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
@@ -12,24 +11,24 @@ import { ProductsService } from './products.service';
 
 @Injectable()
 class ParseJSONPipe implements PipeTransform {
-  transform(value: unknown, metadata: ArgumentMetadata) {
-    let parsedValue: unknown;
-
+  transform(value: unknown) {
     if (value === null || value === undefined) {
-      parsedValue = {};
-    } else if (typeof value === 'object') {
-      parsedValue = value;
-    } else if (typeof value === 'string') {
+      return {};
+    }
+
+    if (typeof value === 'object') {
+      return value;
+    }
+
+    if (typeof value === 'string') {
       try {
-        parsedValue = JSON.parse(value);
+        return JSON.parse(value);
       } catch {
         throw new BadRequestException('Invalid JSON format');
       }
-    } else {
-      throw new BadRequestException('Invalid JSON format');
     }
 
-    return metadata.metatype ? plainToInstance(metadata.metatype, parsedValue) : parsedValue;
+    throw new BadRequestException('Invalid JSON format');
   }
 }
 
