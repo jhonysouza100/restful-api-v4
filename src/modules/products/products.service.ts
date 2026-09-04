@@ -25,14 +25,6 @@ export class ProductsService {
       const uploadedImages = await this.uploadsService.uploadImages(files, `products/${this.authContextRequest.getAuthCompany()}`);
       newProduct.images = uploadedImages;
     }
-    
-    newProduct.slug = newProduct.name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-') // Espacios a guiones
-      .replace(/[^a-z0-9-]/g, '') // Solo letras, números, guiones
-      .replace(/-+/g, '-') // Múltiples guiones a uno
-      .replace(/^-+|-+$/g, ''); // Quitar guiones al inicio y final
 
     await this.productsRepo.save(newProduct);
 
@@ -233,15 +225,7 @@ export class ProductsService {
       data.images = newImages;
     }
 
-    const slug = (data?.name || productFound.name)
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-') // Espacios a guiones
-      .replace(/[^a-z0-9-]/g, '') // Solo letras, números, guiones
-      .replace(/-+/g, '-') // Múltiples guiones a uno
-      .replace(/^-+|-+$/g, ''); // Quitar guiones al inicio y final
-
-    await this.productsRepo.update(id, {...data, slug});
+    await this.productsRepo.update(id, data);
 
     throw new HttpException(`${productFound.name} has been updated`, HttpStatus.OK);
   }
