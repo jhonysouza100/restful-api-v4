@@ -225,8 +225,10 @@ export class ProductsService {
       data.images = newImages;
     }
 
+     Object.assign(productFound, data);
+    await this.productsRepo.save(productFound);
     // Actualizamos el producto con los nuevos datos
-    await this.productsRepo.update(id, data);
+    // await this.productsRepo.update(id, data);
 
     throw new HttpException(`${productFound.name} has been updated`, HttpStatus.OK);
   }
