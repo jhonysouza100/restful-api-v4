@@ -1,10 +1,11 @@
 import { BadRequestException, Body, Controller, Delete, Get, Injectable, Param, Patch, PipeTransform, Post, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiTags, ApiQuery, getSchemaPath } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
 import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
+import { DuplicateProductsDto } from './dto/duplicate-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
 
@@ -75,10 +76,21 @@ export class ProductsController {
       return error.message;
     }
   }
+
+  @Post('duplicate')
+  @UseRoleAuthToken()
+  @ApiOperation({ summary: 'Duplicar productos', description: 'Duplica los productos indicados por sus IDs dentro del tenant actual.' })
+  duplicate(@Body() duplicateProductsDto: DuplicateProductsDto) {
+    try {
+      return this.productsService.duplicate(duplicateProductsDto.ids);
+    } catch (error: any) {
+      return error.message;
+    }
+  }
   
   @Get()
   @ApiOperation({ summary: 'Obtener productos', description: 'Permite obtener una lista de productos con filtros opcionales.' })
-  @ApiParam({ name: 'query', description: 'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.', example: '?category=OTHER' })
+  @ApiQuery({ name: 'query', description: 'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.', example: '?q=hello&tenant_id=1' })
   findAll(@Query() query?: Record<string, string>) {
     try {
       return this.productsService.findAll(query);

@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, MoreThanOrEqual, Repository } from 'typeorm';
+import { In, Like, MoreThanOrEqual, Repository } from 'typeorm';
 import { env } from '../../common/config/env.config';
 import { AuthContextRequest } from '../../core/auth/auth.context';
 import { TenantContextService } from '../../core/tenant/tenant.context';
@@ -29,6 +29,24 @@ export class ProductsService {
     await this.productsRepo.save(newProduct);
 
     throw new HttpException(`Se creó ${createProductDto.name}`, HttpStatus.OK);
+  }
+
+  async duplicate(ids: number[]) {
+    const tenantId = this.authContextRequest.getAuthId();
+
+    try {
+      const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } });
+  
+      const duplicatedProducts = products.map(({ id, createdAt, updatedAt, ...product }) =>
+        this.productsRepo.create({ ...product, tenant_id: tenantId }),
+      );
+  
+      await this.productsRepo.save(duplicatedProducts);
+      
+     throw new HttpException(`Item duplicado correctamente`, HttpStatus.OK);
+    } catch (error: any) {
+      throw new HttpException('Error al duplicar el item', HttpStatus.BAD_REQUEST);
+    }
   }
 
   async findAll(query: Record<string, string> = {}) {
