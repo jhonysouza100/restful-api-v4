@@ -1,6 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ProductCategoryEnum } from '../enums/products.enum';
 
 class ProductImageInterface {
@@ -43,8 +41,6 @@ class ProductColorInterface {
 
 export class CreateProductDto {
   @ApiProperty({ example: 'Laptop', description: 'Nombre del producto' })
-  @IsString()
-  @IsNotEmpty()
   name: string;
   
   @ApiProperty({ example: 'Articulo Varios', description: 'Nombre del producto para ventas secretas' })
@@ -92,14 +88,9 @@ export class CreateProductDto {
   color?: ProductColorInterface;
   
   @ApiProperty({ example: 999.99, description: 'Precio del producto' })
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
   price: number;
   
   @ApiProperty({ example: 100, description: 'Cantidad de productos en stock', default: 1 })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
   stock?: number;
 
   @ApiProperty({ example: 50, description: 'Cantidad máxima de productos que un cliente puede comprar', default: 1 })

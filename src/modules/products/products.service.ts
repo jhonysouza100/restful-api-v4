@@ -34,8 +34,7 @@ export class ProductsService {
   async findAll(query: Record<string, string> = {}) {
     const ITEMS_PER_PAGE = env.ITEMS_PER_PAGE; // Número de elementos por página
     // Desestructuramos los parámetros de la query
-    const { page, status, ...filters } = query;
-    const tenantId = this.tenantContextService.getTenantId();
+    const { page, tenant_id, status, stock, ...filters } = query;
     // Se asegura de que `page` tenga un valor por defecto de 1
     const pageNumber = parseInt(page) > 0 ? parseInt(page) : 1;
 
@@ -43,7 +42,6 @@ export class ProductsService {
       // Si no se pasan filtros de busqueda
       if (!query) {
         const [products, count] = await this.productsRepo.findAndCount({
-          where: { tenant_id: tenantId },
           skip: ITEMS_PER_PAGE * (pageNumber - 1),
           take: ITEMS_PER_PAGE,
         });
@@ -67,7 +65,9 @@ export class ProductsService {
           whereConditions['stock'] = MoreThanOrEqual(1);
       }
 
-      whereConditions['tenant_id'] = tenantId;
+      if (tenant_id !== undefined) {
+        whereConditions['tenant_id'] = tenant_id;
+      }
 
 
       // Realizamos la búsqueda con las condiciones dinámicas
@@ -89,7 +89,7 @@ export class ProductsService {
 
   // Este es un método "privado" encargado de buscar productos por su ID.
   async findOne(id: number) {
-    const product = await this.productsRepo.findOne({ where: { id, tenant_id: this.tenantContextService.getTenantId() } });
+    const product = await this.productsRepo.findOne({ where: { id } });
     if (!product) throw new HttpException(`Producto ${id} no encontrado`, HttpStatus.NOT_FOUND);
     return product;
   }
