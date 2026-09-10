@@ -1,137 +1,286 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# restful-api-v4
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API backend para ChillHop Studio, construido con NestJS y TypeScript. El repositorio contiene únicamente el backend: no hay frontend, aplicación móvil ni panel administrativo en este proyecto.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+> **Estado:** backend funcional en etapa de endurecimiento. Hay módulos operativos, pero seguridad multi-tenant, contratos externos, pagos y operación productiva todavía requieren trabajo antes de considerarlo listo para producción.
 
-## Description
+## Overview
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+El servicio expone una API versionada bajo `/api/v1`, documentación Swagger en `/docs` y persistencia MySQL mediante TypeORM. El dominio actual cubre autenticación JWT con roles, tenants, productos, órdenes, pagos con Mercado Pago, envíos con MiCorreo, carga de imágenes en Cloudinary y correo SMTP.
 
-## Project setup
+La documentación de este archivo describe el estado observado en el código, no una promesa de funcionalidades futuras. Debe actualizarse junto con cada cambio de contrato o integración.
 
-```bash
-$ npm install
+## Current Status
+
+| Área | Estado | Observación |
+|---|---|---|
+| Arranque NestJS | Parcial | Existe bootstrap, validación de entorno y prefijo `/api`; el contrato de configuración es demasiado estricto y requiere revisión. |
+| API versionada | Implementado | Versionado URI `v1`; Swagger se monta en `/docs`. |
+| Persistencia | Parcial | TypeORM + MySQL; `synchronize: true` está activo y no se observan migraciones. |
+| Autenticación | Parcial | Login y JWT con roles `ADMIN`/`ROOT`; falta cerrar protección de administración y expiración/contrato completo. |
+| Multi-tenancy | Parcial | `TenantGuard`, `TenantContextService`, `x-api-key` y `Origin`; existen rutas sin aislamiento consistente. |
+| Productos | Parcial | CRUD y Cloudinary presentes; validación, filtros, paginación, duplicación y stock requieren revisión. |
+| Órdenes | Parcial | Creación implementada; faltan validaciones server-side y estados transaccionales robustos. |
+| Pagos | Parcial | Preference y webhook de Mercado Pago presentes; falta idempotencia y validación fuerte. |
+| Envíos | Parcial | MiCorreo integrado en rates/import/agencies; respuestas y errores no están normalizados. |
+| Emails | Iniciado | SMTP/Nodemailer presente; requiere endurecimiento de adjuntos, errores y logs. |
+| Operación | Pendiente | No se observan Dockerfile, compose, CI/deploy reproducible ni health check. |
+| Documentación | Parcial | Swagger e READMEs internos existen, pero hay desalineación con rutas/campos reales. |
+| Frontend/UI | Pendiente | Fuera del alcance de este repositorio. |
+
+## Arquitectura
+
+```text
+src/
+├── main.ts                 # bootstrap, CORS, versionado, Swagger y pipes globales
+├── app.module.ts           # composición de módulos
+├── common/                 # configuración, constantes y utilidades compartidas
+├── core/
+│   ├── auth/               # login, JWT, roles y guards
+│   └── tenant/             # tenant context, guard, entidad y administración
+└── modules/
+    ├── products/           # catálogo e imágenes
+    ├── orders/             # órdenes y stock
+    ├── payments/           # Mercado Pago
+    ├── shipments/          # MiCorreo
+    ├── emails/             # SMTP/Nodemailer
+    └── uploads/            # Cloudinary y archivos
 ```
 
-## Compile and run the project
+### Stack detectado
 
-```bash
-# development
-$ npm run start
+- NestJS 11, TypeScript 5, Node.js.
+- Express mediante `@nestjs/platform-express`.
+- TypeORM 0.3 + MySQL (`mysql2`).
+- Zod para configuración y `ValidationPipe` con `class-validator`/`class-transformer`.
+- JWT, bcrypt, throttling y Swagger.
+- Cloudinary, Mercado Pago, MiCorreo y SMTP/Nodemailer.
+- Jest/Supertest están configurados; este roadmap no estima la creación de tests automatizados.
 
-# watch mode
-$ npm run start:dev
+## Configuración e integraciones
 
-# production mode
-$ npm run start:prod
+### Variables declaradas por el esquema de entorno
 
-# Swagger UI
-$ /docs
+`PORT`, `ALLOWED_ORIGINS`, `MONGO_DB_URL`, `REDIS_URL`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `SERVER_URL`, `THROTTLER_LIMITER`, `ITEMS_PER_PAGE`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `JWT_SECRET`, `SMTP_USER`, `SMTP_PASS` y `APP_NAME`.
 
-# Docker build image
-$ `docker build . -t image-name:version`
+El esquema actual exige también MongoDB y Redis aunque no se observa uso equivalente en los módulos revisados. Además, el entorno menciona `BREVO_API_KEY`, `MERCADOPAGO_API_KEY` y `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL`; deben clasificarse como usadas, opcionales o variables muertas en la Fase 0. No se deben copiar secretos reales al repositorio. Crear un `.env.example` sin valores sensibles forma parte del roadmap.
 
-# Docker run container
-$ `docker run --env-file=./.env -p 3001:3001 mvp-api:beta`
-```
+### Integraciones actuales
 
-## Run tests
+| Integración | Uso visible | Riesgo/próximo control |
+|---|---|---|
+| MySQL | Entidades de tenants, productos y órdenes | Migraciones, `synchronize`, índices y transacciones. |
+| Cloudinary | Subida/duplicación/borrado de imágenes | Validar tamaño/tipo, ownership y limpieza de recursos. |
+| Mercado Pago | Preference y notificación/webhook | Verificar payload, URL, credenciales, idempotencia y estados. |
+| MiCorreo | Tarifas, importaciones y agencias | Validar respuestas y normalizar errores externos. |
+| SMTP/Nodemailer | Envío de emails | Quitar logs sensibles y limitar adjuntos. |
+| Redis/MongoDB | Variables declaradas, uso no confirmado | No asumir dependencia funcional hasta verificar imports y runtime. |
 
-```bash
-# unit tests
-$ npm run test
+## API visible
 
-# e2e tests
-$ npm run test:e2e
+Las rutas exactas deben mantenerse sincronizadas con Swagger. Este inventario resume los grupos observados y sus dependencias principales:
 
-# test coverage
-$ npm run test:cov
-```
+| Grupo | Responsabilidad | Auth/tenant observado |
+|---|---|---|
+| Auth | Login, emisión/verificación JWT y roles | JWT parcial; revisar protección de administración. |
+| Tenants | Administración y resolución de tenants | Guard y permisos deben quedar explícitos; hoy es insuficiente. |
+| Products | Crear, listar, actualizar, eliminar y operar imágenes | Tenant aplicado de forma inconsistente en algunos endpoints. |
+| Orders | Crear/consultar órdenes y actualizar estados/stock | Requiere filtro tenant y validación de precios/cantidades. |
+| Payments | Crear preference y recibir notificaciones | Webhook debe ser público solo en recepción y seguro por verificación/idempotencia. |
+| Shipments | Rates, importación y agencias de MiCorreo | Credenciales y respuestas externas deben validarse. |
+| Emails | Envío SMTP y adjuntos | Requiere límites y manejo uniforme de excepciones. |
+| Uploads | Operaciones con Cloudinary | Revisar claves privadas y autorización por recurso. |
 
-## Generate resources
+Rutas operativas declaradas en runtime:
 
-```bash
-nest g mo users
-```
+- Base API: `/api/v1`.
+- Swagger: `/docs`.
+- CORS: actualmente `origin: '*'` con `credentials: true`; esto es incompatible con un despliegue seguro y no usa `ALLOWED_ORIGINS`.
 
-```bash
-nest g co users
-```
+## Inventario de trabajo
 
-```bash
-nest g s users
-```
+### Core
 
-```bash
-|| nest g res users --no-spec # nest generate resource users whitout specs
-```
+- **P0:** contrato de arranque, configuración, JWT, CORS, guards y aislamiento tenant.
+- **P1:** autorización por rol y administración segura de tenants.
+- **P2:** contratos Swagger y documentación interna alineada.
 
-## Eslint
-`.eslintrc.js`
-```bash
-# eslint rules config
-"prettier/prettier": [
-    "error",
-    {
-      "endOfLine": "auto"
-    }
-  ]
-```
+### Features
 
-## Deployment
+- **P1:** productos, inventario, órdenes y checkout.
+- **P1:** preference/webhook e idempotencia de Mercado Pago.
+- **P2:** MiCorreo, emails y Cloudinary endurecidos.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Infrastructure / operación
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- **P2:** health check, logs básicos, Docker y deploy reproducible.
+- **P3:** estrategia de migraciones, CI y observabilidad ampliada.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+### UX/UI
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+No hay frontend en este repositorio. La UX de administración, checkout y seguimiento debe planificarse como proyecto separado o como aplicación consumidora de esta API.
 
-## Resources
+### Optimización y futuro
 
-Check out a few resources that may come in handy when working with NestJS:
+Después del MVP: índices y queries, caching solo donde sea necesario, métricas, colas para emails/webhooks, panel admin, tracking de envíos, cupones, variantes, multi-moneda y reportes.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Roadmap por fases
 
-## Support
+| Fase | Objetivo | Dependencias | Resultado | Estimación base |
+|---|---|---|---|---:|
+| 0. Arranque y contrato operativo | Hacer reproducible el entorno y fijar el contrato API | Ninguna | `.env.example`, rutas y variables verificadas | 10 h |
+| 1. Seguridad y consistencia | Cerrar JWT, tenants, CORS y errores críticos | Fase 0 | Base segura para construir features | 24 h |
+| 2. Productos e inventario | CRUD tenant-safe y stock coherente | Fase 1 | Catálogo usable por tenant | 18 h |
+| 3. Checkout y órdenes | Orden calculada y persistida solo con datos confiables | Fases 1–2 | Flujo de compra consistente | 16 h |
+| 4. Pagos/webhooks | Estados e inventario resistentes a reintentos | Fase 3 | Pago confirmado de forma segura | 14 h |
+| 5. Integraciones operativas | Endurecer email, Cloudinary y MiCorreo | Fases 2–4 | Integraciones confiables | 12 h |
+| 6. Operación y documentación | Ejecutar, observar y mantener el servicio | Fases 0–5 | Deploy reproducible y docs vivas | 14 h |
+| **Total** |  |  |  | **108 h** |
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Tabla maestra de tareas
 
-## Stay in touch
+Las horas son para una sola persona y no incluyen tests automatizados. Cada tarea está limitada a 1–4 horas para evitar tickets XL.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+| ID | Prioridad | Tarea | Dep. | Complejidad | h | Jornadas 4h / 2h | Estado |
+|---|---|---|---|---:|---:|---:|---|
+| F0-01 | P0 | Confirmar rutas `/api/v1`, `/docs` y respuestas | — | S | 2 | 0.5 / 1 | Pendiente |
+| F0-02 | P0 | Crear `.env.example` seguro | F0-01 | S | 2 | 0.5 / 1 | Pendiente |
+| F0-03 | P0 | Verificar variables usadas y variables muertas | F0-02 | S | 2 | 0.5 / 1 | Pendiente |
+| F0-04 | P0 | Validar arranque con entorno completo | F0-03 | S | 2 | 0.5 / 1 | Pendiente |
+| F0-05 | P0 | Definir datos mínimos y contrato de tenant | F0-01 | S | 2 | 0.5 / 1 | Pendiente |
+| F1-01 | P0 | Confirmar `JWT_SECRET` desde entorno y expiración | F0-04 | S | 3 | 0.75 / 1.5 | Pendiente |
+| F1-02 | P0 | Separar identificación pública y administración tenant | F0-05 | M | 4 | 1 / 2 | Pendiente |
+| F1-03 | P0 | Proteger rutas administrativas de tenants | F1-02 | M | 3 | 0.75 / 1.5 | Pendiente |
+| F1-04 | P0 | Normalizar `TenantGuard` y `TenantContextService` | F1-02 | M | 4 | 1 / 2 | Pendiente |
+| F1-05 | P0 | Aplicar filtro tenant a productos y órdenes | F1-04 | M | 4 | 1 / 2 | Pendiente |
+| F1-06 | P0 | Corregir CORS con `ALLOWED_ORIGINS` | F0-03 | S | 2 | 0.5 / 1 | Pendiente |
+| F1-07 | P0 | Normalizar HTTP status y excepciones | F0-01 | M | 4 | 1 / 2 | Pendiente |
+| F2-01 | P1 | Completar validadores de DTO de productos | F1-05 | M | 4 | 1 / 2 | Pendiente |
+| F2-02 | P1 | Revisar multipart, tamaño y tipo de archivos | F2-01 | S | 2 | 0.5 / 1 | Pendiente |
+| F2-03 | P1 | Corregir filtros y paginación tenant-safe | F2-01 | M | 4 | 1 / 2 | Pendiente |
+| F2-04 | P1 | Revisar slugs, duplicación y borrado Cloudinary | F2-02 | M | 4 | 1 / 2 | Pendiente |
+| F2-05 | P1 | Hacer stock seguro y coherente | F2-03 | M | 4 | 1 / 2 | Pendiente |
+| F3-01 | P1 | Validar cantidades y precios desde servidor | F2-05 | M | 4 | 1 / 2 | Pendiente |
+| F3-02 | P1 | Completar estados y persistencia de órdenes | F3-01 | M | 4 | 1 / 2 | Pendiente |
+| F3-03 | P1 | Integrar rates MiCorreo sin confiar en cliente | F3-02 | M | 4 | 1 / 2 | Pendiente |
+| F3-04 | P1 | Crear preference con datos internos | F3-02 | M | 4 | 1 / 2 | Pendiente |
+| F4-01 | P1 | Alinear `notification_url` con ruta real | F3-04 | S | 2 | 0.5 / 1 | Pendiente |
+| F4-02 | P1 | Validar respuestas y credenciales Mercado Pago | F4-01 | M | 4 | 1 / 2 | Pendiente |
+| F4-03 | P1 | Añadir idempotencia del webhook | F4-02 | L | 4 | 1 / 2 | Pendiente |
+| F4-04 | P1 | Proteger transiciones de orden y stock | F4-03 | M | 4 | 1 / 2 | Pendiente |
+| F5-01 | P2 | Eliminar logs sensibles y debugging | F1-07 | S | 2 | 0.5 / 1 | Pendiente |
+| F5-02 | P2 | Endurecer email y adjuntos | F5-01 | M | 3 | 0.75 / 1.5 | Pendiente |
+| F5-03 | P2 | Normalizar errores MiCorreo | F3-03 | M | 3 | 0.75 / 1.5 | Pendiente |
+| F5-04 | P2 | Limitar y autorizar operaciones Cloudinary | F2-04 | M | 4 | 1 / 2 | Pendiente |
+| F6-01 | P2 | Agregar health check operativo | F0-04 | S | 2 | 0.5 / 1 | Pendiente |
+| F6-02 | P2 | Crear Dockerfile reproducible | F6-01 | M | 4 | 1 / 2 | Pendiente |
+| F6-03 | P2 | Documentar deploy y rollback | F6-02 | S | 2 | 0.5 / 1 | Pendiente |
+| F6-04 | P2 | Actualizar Swagger y READMEs internos | F1-07 | M | 4 | 1 / 2 | Pendiente |
+| F6-05 | P3 | Limpieza de tipos, imports y módulos muertos | F6-04 | M | 2 | 0.5 / 1 | Pendiente |
+| F6-06 | P3 | Revisar índices y queries principales | F1-05 | M | 4 | 1 / 2 | Pendiente |
 
-## License
+## Estimación
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- **Roadmap completo:** 108 horas base.
+- **Buffer central:** 20% para integración, datos existentes y contratos externos.
+- **Roadmap completo con buffer:** `108 × 1.20 = 130 horas`.
+- **Jornadas mínimas:** `130 / 4 = 32.5`, aproximadamente **33 jornadas de 4 horas**.
+- **Jornadas conservadoras:** `130 / 2 = 65 jornadas de 2 horas`.
+
+### Alcance MVP
+
+El MVP funcional contiene F0 completa, F1 completa, F2 completa, F3 completa y F4 completa: **82 horas base**, **99 horas con buffer**, aproximadamente **25 jornadas de 4 horas** o **50 jornadas de 2 horas**.
+
+Incluye:
+
+1. Arranque reproducible y entorno documentado.
+2. Tenant seguro y filtros consistentes.
+3. Login JWT/roles protegido.
+4. Productos CRUD aislados por tenant.
+5. Creación de órdenes con cantidades, precios y totales calculados en servidor.
+6. Preference de Mercado Pago.
+7. Webhook idempotente que actualiza orden e inventario de forma segura.
+8. Validación manual de los flujos principales.
+
+Puede esperar fuera del MVP: emails refinados, MiCorreo avanzado, Cloudinary refinado, Docker/deploy, health check, optimización de queries, observabilidad ampliada, panel admin y frontend.
+
+> La estimación no incluye tests automatizados, diseño de frontend, migración de datos histórica ni cambios de producto no descritos en esta tabla.
+
+## ¿Qué hago ahora?
+
+### Next Step recomendado
+
+**Auditar y corregir la configuración de arranque y seguridad — 2–3 horas.**
+
+1. Revisar `src/common/config/env.config.ts` y clasificar variables obligatorias.
+2. Confirmar que `src/common/constants.ts` usa el `JWT_SECRET` real del entorno.
+3. Conectar `ALLOWED_ORIGINS` en `src/main.ts` y eliminar `origin: '*'` con credenciales.
+4. Documentar `.env.example` sin secretos.
+5. Confirmar las rutas `/api/v1` y `/docs` contra Swagger.
+6. Arrancar el proyecto con una configuración reproducible y registrar cualquier variable incompatible.
+
+**Resultado esperado:** el proyecto arranca sin contradicciones entre documentación y runtime. Después de esta tarea, proteger la administración de tenants es el siguiente bloque P0.
+
+### Cómo dividir una tarea bloqueada
+
+Si una tarea no puede cerrarse en 2–4 horas, dividirla por contrato: primero reproducir el fallo, luego aislar la integración, después corregir el caso feliz y finalmente cubrir errores/reintentos. Registrar la dependencia externa, el resultado observable y la decisión tomada; no aumentar una tarea a XL.
+
+## Recomendaciones técnicas
+
+| Problema | Impacto | Recomendación | Beneficio | Momento |
+|---|---|---|---|---|
+| `synchronize: true` | Puede alterar datos en producción | Migraciones versionadas y revisión antes de aplicar | Cambios reversibles | Ahora/MVP |
+| CORS `*` + credentials | Riesgo de acceso cross-origin | Parsear `ALLOWED_ORIGINS` y permitir solo orígenes conocidos | Reduce exposición | Ahora |
+| Aislamiento tenant irregular | Fuga de datos entre clientes | Guard central + filtro explícito en cada query | Seguridad de negocio | MVP |
+| JWT/roles parcial | Administración expuesta | Expiración, guard y permisos explícitos | Control de acceso | MVP |
+| Webhook sin idempotencia fuerte | Stock/orden duplicados | Clave única de evento y transición monotónica | Consistencia | MVP |
+| Errores convertidos en strings | Clientes no pueden reaccionar bien | Excepciones Nest y DTO de error estable | Integración predecible | Ahora |
+| DTOs incompletos | Datos inválidos o inseguros | Validadores, límites y whitelist | Menor superficie de ataque | MVP |
+| Logs sensibles/debug | Exposición de secretos y ruido | Logging estructurado sin credenciales | Operación segura | Después de MVP |
+| Sin health check/deploy | Difícil operar y recuperar | Endpoint de salud, Docker y rollback | Reproducibilidad | Después de MVP |
+
+## Known Issues y riesgos
+
+- El esquema de entorno exige dependencias cuyo uso real no está confirmado.
+- `ALLOWED_ORIGINS` existe, pero el bootstrap usa `origin: '*'`.
+- `synchronize: true` no es una estrategia segura para producción.
+- Hay endpoints de productos, payments y tenants que requieren auditoría de guards y filtros.
+- Mercado Pago puede reintentar o entregar eventos fuera de orden; el stock no debe mutar dos veces.
+- Credenciales, claves privadas y payloads pueden filtrarse si se mantienen logs de debugging.
+- Las respuestas de MiCorreo y Mercado Pago no están suficientemente validadas.
+- No hay infraestructura declarativa ni pipeline de despliegue visible.
+- El único e2e visible es el starter de Nest; la validación manual del MVP debe ser explícita.
+- Los READMEs internos pueden no reflejar rutas y campos actuales.
+
+## Progress tracking
+
+Actualizar esta sección cuando se cierre una tarea:
+
+- [ ] Fase 0 — arranque y contrato operativo.
+- [ ] Fase 1 — seguridad y consistencia.
+- [ ] Fase 2 — productos e inventario.
+- [ ] Fase 3 — checkout y órdenes.
+- [ ] Fase 4 — pagos y webhooks.
+- [ ] Fase 5 — integraciones operativas.
+- [ ] Fase 6 — operación y documentación.
+
+## Resumen ejecutivo
+
+El repositorio ya tiene una base funcional para una API de catálogo y comercio, pero su estado es **parcial**, no production-ready: el principal riesgo está en el aislamiento multi-tenant, la configuración de seguridad, la consistencia de pagos/stock y la ausencia de operación reproducible. El MVP estimado requiere **82 horas base / 99 con buffer**; el roadmap completo requiere **108 horas base / 130 con buffer**, sin tests automatizados ni frontend.
+
+Las próximas cinco tareas son: **F0-01** confirmar contrato de rutas, **F0-02** crear `.env.example`, **F0-03** verificar variables usadas, **F0-04** validar arranque y **F0-05** fijar el contrato mínimo de tenant. Al completar esas tareas, el siguiente paso técnico es conectar `JWT_SECRET` y `ALLOWED_ORIGINS` al runtime y proteger la administración de tenants.
+
+## Licencia
+
+El paquete declara licencia `UNLICENSED`. Confirmar la política de distribución antes de publicar o reutilizar este servicio.
+
+## Referencias del repositorio
+
+- `src/main.ts` — bootstrap, CORS, versionado y Swagger.
+- `src/app.module.ts` — composición principal.
+- `src/common/config/env.config.ts` — esquema de variables.
+- `src/core/auth/` — JWT, roles y autenticación.
+- `src/core/tenant/` — contexto y aislamiento tenant.
+- `src/modules/` — productos, órdenes, pagos, envíos, emails y uploads.
+- `changes.txt` — historial/pendientes del proyecto.
+- `test/app.e2e-spec.ts` — prueba inicial de Nest.
