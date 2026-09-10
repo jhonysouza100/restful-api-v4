@@ -9,8 +9,6 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().min(1, 'PORT is required.').transform(Number),
   ALLOWED_ORIGINS: z.string().min(1, 'ALLOWED_ORIGINS is required.').transform((val) => val.split(',').map((origin) => origin.trim())),
-  MONGO_DB_URL: z.string().min(1, 'MONGO_DB_URL is required.'),
-  REDIS_URL: z.string().min(1, 'REDIS_URL is required.'),
   DATABASE_HOST: z.string().min(1, 'DATABASE_HOST is required.'),
   DATABASE_PORT: z.string().min(1, 'DATABASE_PORT is required.').transform(Number),
   DATABASE_NAME: z.string().min(1, 'DATABASE_NAME is required.'),
