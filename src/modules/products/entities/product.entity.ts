@@ -1,4 +1,4 @@
-import { BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { BeforeInsert, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 // import { QnA } from './QnA.entity';
 // import { Review } from './review.entity';
 import { ProductCategoryEnum } from '../enums/products.enum';
@@ -68,8 +68,11 @@ export class Product {
   @Column({ type: 'int', nullable: true, default: 0 })
   discount: number;
 
-  @Column({ type: 'int', nullable: true, default: 5 })
-  rating: number;
+  @Column({ type: 'simple-json', nullable: true })
+  performance: {
+    sales: number,
+    rating: number
+  }
 
   @Column({ type: 'boolean', nullable: true, default: true })
   isActive: boolean;
@@ -89,6 +92,10 @@ export class Product {
   @BeforeInsert()
   // @ts-ignore - TypeORM lifecycle hook - automatically invoked by TypeORM
   private generateSlug() {
+    if (!this.performance) {
+      this.performance = { sales: 0, rating: 5.0 };
+    }
+
     if (this.name) {
       this.slug = this.name
         .toLowerCase()

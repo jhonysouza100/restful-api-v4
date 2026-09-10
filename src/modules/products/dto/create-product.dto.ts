@@ -101,9 +101,6 @@ export class CreateProductDto {
   
   @ApiProperty({ example: 10, description: 'Porcentaje de descuento del producto', default: 0 })
   discount?: number;
-  
-  @ApiProperty({ example: 4, description: 'Calificación promedio del producto' })
-  rating?: number;
 
   @ApiProperty({ example: true, description: 'Estado del producto (activo o inactivo)', default: true })
   isActive?: boolean;

@@ -276,8 +276,12 @@ export class OrdersService {
           orderSearched.status = OrderStatusEnum.ACCREDITED;
           // Se guarda la orden actualizada.
           await this.ordersRepo.update({ id: orderSearched.id }, orderSearched);
-          // Se descuenta el inventario por cada item.
+          // Se descuenta el inventario y se registran unidades vendidas por cada item.
           await this.productsService.subtractSoldProduct(orderSearched?.items);
+          await this.productsService.incrementSales(
+            orderSearched?.items,
+            orderSearched.tenant_id,
+          );
 
           await this.notifyOrderByEmail({
             from: `${tenantSearched?.company}`,

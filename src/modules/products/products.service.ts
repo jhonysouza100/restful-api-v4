@@ -31,42 +31,6 @@ export class ProductsService {
     throw new HttpException(`Se creó ${createProductDto.name}`, HttpStatus.OK);
   }
 
-  async duplicate(ids: number[]) {
-    const tenantId = this.authContextRequest.getAuthId();
-
-    const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } });
-
-    if (products.length === 0) {
-      throw new HttpException(`No se encontraron items para duplicar`, HttpStatus.NOT_FOUND);
-    }
-
-    const duplicatedProducts = products.map(({ id, createdAt, updatedAt, ...product }, index) =>
-      this.productsRepo.create({ ...product, name: `${product.name} (Copia ${index + 1})`, tenant_id: tenantId, images: product.images?.map((image, idx) => ({ ...image, public_id: `copia_${idx + 1}` })) }),
-    );
-
-    await this.productsRepo.save(duplicatedProducts);
-
-    throw new HttpException(`${ids.length} item(s) duplicado(s)`, HttpStatus.OK);
-  }
-
-  async desactive(ids: number[]) {
-    const tenantId = this.authContextRequest.getAuthId();
-
-    const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } })
-
-    if (products.length === 0) {
-      throw new HttpException(`No se encontraron items para cambiar su estado`, HttpStatus.NOT_FOUND);
-    }
-
-    await Promise.all(
-      products.map(({id, isActive}) =>
-        this.productsRepo.update(id, { isActive: !isActive }),
-      ),
-    );
-
-    throw new HttpException(`${ids.length} item(s) actualizado(s)`, HttpStatus.OK);
-  }
-
   async findAll(query: Record<string, string> = {}) {
     const ITEMS_PER_PAGE = env.ITEMS_PER_PAGE; // Número de elementos por página
     // Desestructuramos los parámetros de la query
@@ -173,6 +137,39 @@ export class ProductsService {
         );
       }),
     );
+  }
+
+  // Incrementa las unidades vendidas de forma transaccional y aislada por tienda.
+  async incrementSales(data?: { item_id: number; quantity: number }[], tenantId = this.tenantContextService.getTenantId()) {
+    if (!data?.length) return;
+
+    const quantities = new Map<number, number>();
+    for (const item of data) {
+      if (!item.item_id) continue;
+      if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+        throw new HttpException('La cantidad vendida debe ser un entero positivo', HttpStatus.BAD_REQUEST);
+      }
+      quantities.set(item.item_id, (quantities.get(item.item_id) ?? 0) + item.quantity);
+    }
+
+    await this.productsRepo.manager.transaction(async (manager) => {
+      for (const [productId, quantity] of quantities) {
+        const product = await manager.findOne(Product, {
+          where: { id: productId, tenant_id: tenantId },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!product) {
+          throw new HttpException(`Producto ${productId} no encontrado`, HttpStatus.NOT_FOUND);
+        }
+
+        const current = product.performance ?? { sales: 0, rating: 5.0 };
+        product.performance = {
+          sales: Number(current.sales ?? 0) + quantity,
+          rating: current.rating ?? 5.0,
+        };
+        await manager.save(Product, product);
+      }
+    });
   }
 
   // Método interno encargado de restaurar el inventario de ventas canceladas.
@@ -285,6 +282,42 @@ export class ProductsService {
     await this.productsRepo.update(id, data);
 
     throw new HttpException(`${productFound.name} actualizado`, HttpStatus.OK);
+  }
+
+  async duplicate(ids: number[]) {
+    const tenantId = this.authContextRequest.getAuthId();
+
+    const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } });
+
+    if (products.length === 0) {
+      throw new HttpException(`No se encontraron items para duplicar`, HttpStatus.NOT_FOUND);
+    }
+
+    const duplicatedProducts = products.map(({ id, createdAt, updatedAt, ...product }, index) =>
+      this.productsRepo.create({ ...product, name: `${product.name} (Copia ${index + 1})`, tenant_id: tenantId, images: product.images?.map((image, idx) => ({ ...image, public_id: `copia_${idx + 1}` })) }),
+    );
+
+    await this.productsRepo.save(duplicatedProducts);
+
+    throw new HttpException(`${ids.length} item(s) duplicado(s)`, HttpStatus.OK);
+  }
+
+  async desactive(ids: number[]) {
+    const tenantId = this.authContextRequest.getAuthId();
+
+    const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } })
+
+    if (products.length === 0) {
+      throw new HttpException(`No se encontraron items para cambiar su estado`, HttpStatus.NOT_FOUND);
+    }
+
+    await Promise.all(
+      products.map(({id, isActive}) =>
+        this.productsRepo.update(id, { isActive: !isActive }),
+      ),
+    );
+
+    throw new HttpException(`${ids.length} item(s) actualizado(s)`, HttpStatus.OK);
   }
 
   async remove(idsParam: string) {
