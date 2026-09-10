@@ -34,7 +34,8 @@ export class ProductsService {
   async findAll(query: Record<string, string> = {}) {
     const ITEMS_PER_PAGE = env.ITEMS_PER_PAGE; // Número de elementos por página
     // Desestructuramos los parámetros de la query
-    const { page, tenant_id, status, stock, ...filters } = query;
+    const { page, status, ...filters } = query;
+    const tenantId = this.tenantContextService.getTenantId();
     // Se asegura de que `page` tenga un valor por defecto de 1
     const pageNumber = parseInt(page) > 0 ? parseInt(page) : 1;
 
@@ -42,6 +43,7 @@ export class ProductsService {
       // Si no se pasan filtros de busqueda
       if (!query) {
         const [products, count] = await this.productsRepo.findAndCount({
+          where: { tenant_id: tenantId },
           skip: ITEMS_PER_PAGE * (pageNumber - 1),
           take: ITEMS_PER_PAGE,
         });
@@ -62,12 +64,11 @@ export class ProductsService {
       // Agregar condición exacta para el status si se pasó
       if (status !== undefined) {
         whereConditions['status'] = status === 'true';
-        whereConditions['stock'] = MoreThanOrEqual(1);
+          whereConditions['stock'] = MoreThanOrEqual(1);
       }
 
-      if (tenant_id !== undefined) {
-        whereConditions['tenant_id'] = tenant_id;
-      }
+      whereConditions['tenant_id'] = tenantId;
+
 
       // Realizamos la búsqueda con las condiciones dinámicas
       const [products, count] = await this.productsRepo.findAndCount({
@@ -88,7 +89,7 @@ export class ProductsService {
 
   // Este es un método "privado" encargado de buscar productos por su ID.
   async findOne(id: number) {
-    const product = await this.productsRepo.findOne({ where: { id } });
+    const product = await this.productsRepo.findOne({ where: { id, tenant_id: this.tenantContextService.getTenantId() } });
     if (!product) throw new HttpException(`Producto ${id} no encontrado`, HttpStatus.NOT_FOUND);
     return product;
   }
@@ -223,7 +224,7 @@ export class ProductsService {
 
   // Este metodo se va utilizar en la "tienda" para cargar la pagina de un producto por el slug (nombre amigable para URL). (Controller Scope).
   async findBySlug(slug: string) {
-    const product = await this.productsRepo.findOne({ where: { slug }, relations: ['questions', 'reviews'] }); // { where: { name: Like(`%${name}%`) } }
+    const product = await this.productsRepo.findOne({ where: { slug, tenant_id: this.tenantContextService.getTenantId() }, relations: ['questions', 'reviews'] }); // { where: { name: Like(`%${name}%`) } }
     if (!product) throw new HttpException('No se encontro ningún producto con ese nombre', HttpStatus.NOT_FOUND);
     return product;
   }

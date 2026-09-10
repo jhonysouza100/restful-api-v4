@@ -24,7 +24,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
       password: env.DATABASE_PASSWORD,
       database: env.DATABASE_NAME,
       autoLoadEntities: true,
-      synchronize: true,
+      synchronize: env.NODE_ENV === 'development',
     }),
     ThrottlerModule.forRoot({
       throttlers: [

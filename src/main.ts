@@ -24,8 +24,8 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: '*',
-    credentials: true, // Permite cookies
+    origin: env.ALLOWED_ORIGINS,
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
   });

@@ -8,7 +8,6 @@ export class EmailsService {
   constructor(private readonly tenantContextService: TenantContextService) {}
 
   private getTenantSMTP(): { user: string, pass: string } {
-    console.log("ANTES DE OBTENER LAS PRIVATE_KEYS")
     return this.tenantContextService.getTenantSMTP();
   }
 

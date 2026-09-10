@@ -100,6 +100,8 @@ export class ProductsController {
   }
   
   @Get()
+  @UseTenantGuard()
+  @ApiHeader({ name: 'x-api-key', description: 'API Key (optional if using domain)', required: false })
   @ApiOperation({ summary: 'Obtener productos', description: 'Permite obtener una lista de productos con filtros opcionales.' })
   @ApiQuery({ name: 'q', description: 'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.', example: '?q=hello' })
   findAll(@Query() query?: Record<string, string>) {
@@ -111,6 +113,8 @@ export class ProductsController {
   }
 
   @Get(':slug')
+  @UseTenantGuard()
+  @ApiHeader({ name: 'x-api-key', description: 'API Key (optional if using domain)', required: false })
   @ApiOperation({ summary: 'Obtener producto por slug', description: 'Permite obtener un producto específico por su slug.' })
   @ApiParam({ name: 'slug', description: 'Slug del producto a buscar.', example: 'laptop' })
   findBySlug(@Param('slug') slug: string) {
