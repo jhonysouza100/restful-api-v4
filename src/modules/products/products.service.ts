@@ -36,8 +36,8 @@ export class ProductsService {
 
     const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } });
 
-    if(products.length === 0) {
-      throw new HttpException(`No se encontraron productos para duplicar`, HttpStatus.NOT_FOUND);
+    if (products.length === 0) {
+      throw new HttpException(`No se encontraron items para duplicar`, HttpStatus.NOT_FOUND);
     }
 
     const duplicatedProducts = products.map(({ id, createdAt, updatedAt, ...product }, index) =>
@@ -46,7 +46,25 @@ export class ProductsService {
 
     await this.productsRepo.save(duplicatedProducts);
 
-    throw new HttpException(`Item duplicado correctamente`, HttpStatus.OK);
+    throw new HttpException(`${ids.length} item(s) duplicado(s)`, HttpStatus.OK);
+  }
+
+  async desactive(ids: number[]) {
+    const tenantId = this.authContextRequest.getAuthId();
+
+    const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } })
+
+    if (products.length === 0) {
+      throw new HttpException(`No se encontraron items para cambiar su estado`, HttpStatus.NOT_FOUND);
+    }
+
+    await Promise.all(
+      products.map(({id, isActive}) =>
+        this.productsRepo.update(id, { isActive: !isActive }),
+      ),
+    );
+
+    throw new HttpException(`${ids.length} item(s) actualizado(s)`, HttpStatus.OK);
   }
 
   async findAll(query: Record<string, string> = {}) {
@@ -181,6 +199,31 @@ export class ProductsService {
     );
   }
 
+  private parseStringToArray(idsParam: string): number[] {
+    let ids: number[];
+
+    try {
+      const parsedIds: unknown = JSON.parse(idsParam);
+  
+      if (
+        !Array.isArray(parsedIds) ||
+        parsedIds.length === 0 ||
+        parsedIds.some((id) => !Number.isInteger(id) || id <= 0)
+      ) {
+        throw new Error();
+      }
+  
+      ids = [...new Set(parsedIds as number[])];
+    } catch {
+      throw new HttpException(
+        'El parámetro id debe ser un array JSON válido, por ejemplo [1,2,4]',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return ids;
+  }
+
   // Este metodo se va utilizar en la "tienda" para cargar la pagina de un producto por el slug (nombre amigable para URL). (Controller Scope).
   async findBySlug(slug: string) {
     const product = await this.productsRepo.findOne({ where: { slug }, relations: ['questions', 'reviews'] }); // { where: { name: Like(`%${name}%`) } }
@@ -224,34 +267,53 @@ export class ProductsService {
       // Actualizamos la data con las nuevas imágenes
       data.images = newImages;
     }
-     
+
     if (data.name !== undefined) {
-    const slug = data.name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '')
-      .replace(/-+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      const slug = data.name
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
 
       await this.productsRepo.update(id, { ...data, slug });
-  
+
       throw new HttpException(`${productFound.name} actualizado`, HttpStatus.OK);
     }
-    
+
     await this.productsRepo.update(id, data);
 
     throw new HttpException(`${productFound.name} actualizado`, HttpStatus.OK);
   }
 
-  async remove(id: number) {
-    const productFound = await this.findOne(id);
-    if (productFound.tenant_id !== this.authContextRequest.getAuthId()) throw new HttpException('Usuario no autorizado', HttpStatus.UNAUTHORIZED);
-    await this.productsRepo.delete(id);
-    for (const image of productFound.images || []) {
-      // Se eliminan las imagenes asociadas en Cloudinary
-      await this.uploadsService.deleteImage(image.public_id);
+  async remove(idsParam: string) {
+    const ids = this.parseStringToArray(idsParam);
+
+    const tenantId = this.authContextRequest.getAuthId();
+    const products = await this.productsRepo.find({
+      where: { id: In(ids), tenant_id: tenantId },
+    });
+
+    if (products.length !== ids.length) {
+      const foundIds = new Set(products.map((product) => product.id));
+      const missingIds = ids.filter((id) => !foundIds.has(id));
+      throw new HttpException(
+        `No se encontraron los items: ${missingIds.join(', ')}`,
+        HttpStatus.NOT_FOUND,
+      );
     }
-    throw new HttpException(`${productFound.name} eliminado`, HttpStatus.OK);
+
+    await this.productsRepo.delete({ id: In(ids), tenant_id: tenantId });
+
+    await Promise.all(
+      products.flatMap((product) =>
+        (product.images || []).map((image) =>
+          this.uploadsService.deleteImage(image.public_id),
+        ),
+      ),
+    );
+
+    throw new HttpException(`${ids.length} item(s) eliminado(s)`, HttpStatus.OK);
   }
 }

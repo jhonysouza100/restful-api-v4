@@ -79,10 +79,21 @@ export class ProductsController {
 
   @Post('duplicate')
   @UseRoleAuthToken()
-  @ApiOperation({ summary: 'Duplicar productos', description: 'Duplica los productos indicados por sus IDs dentro del tenant actual.' })
+  @ApiOperation({ summary: 'Duplicar productos', description: 'Duplica los productos indicados por sus IDs dentro del Array de IDs.' })
   duplicate(@Body() duplicateProductsDto: DuplicateProductsDto) {
     try {
       return this.productsService.duplicate(duplicateProductsDto.ids);
+    } catch (error: any) {
+      return error.message;
+    }
+  }
+
+  @Patch('desactive')
+  @UseRoleAuthToken()
+  @ApiOperation({ summary: 'Activar/Desactivar productos', description: 'Cambia el estado de los productos indicados dentro del Array de IDs.' })
+  desactive(@Body() desactiveProductsDto: DuplicateProductsDto) {
+    try {
+      return this.productsService.desactive(desactiveProductsDto.ids);
     } catch (error: any) {
       return error.message;
     }
@@ -169,11 +180,11 @@ export class ProductsController {
 
   @Delete(':id')
   @UseRoleAuthToken(Role.ADMIN)
-  @ApiOperation({ summary: 'Eliminar producto', description: 'Elimina un producto del sistema.' })
-  @ApiParam({ name: 'id', description: 'Identificador único del producto a eliminar.' })
+  @ApiOperation({ summary: 'Eliminar productos', description: 'Elimina productos del sistema.' })
+  @ApiParam({ name: 'id', description: 'Identificador único de los productos a eliminar. [1,2,3]' })
   remove(@Param('id') id: string) {
     try {
-      return this.productsService.remove(+id);
+      return this.productsService.remove(id);
     } catch (error: any) {
       return error.message;
     }
