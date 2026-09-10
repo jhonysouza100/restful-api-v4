@@ -12,6 +12,7 @@ export class ShipmentsController {
   @Post('micorreo/rates')
   @UseTenantGuard()
   @ApiHeader({ name: 'x-api-key', description: 'API Key (optional if using domain)', required: false })
+  @ApiOperation({ summary: 'Obtener tarifas de MiCorreo', description: 'Calcula las tarifas de envío disponibles para un paquete.' })
   getMiCorreoRates(@Body() generateMiCorreoRatesDto: GenerateMiCorreoRatesDto) {
     try {
       return this.shipmentsService.getMiCorreoRates(generateMiCorreoRatesDto);
@@ -23,6 +24,7 @@ export class ShipmentsController {
   @Post('micorreo/import')
   @UseTenantGuard()
   @ApiHeader({ name: 'x-api-key', description: 'API Key (optional if using domain)', required: false })
+  @ApiOperation({ summary: 'Importar envío de MiCorreo', description: 'Importa un envío en MiCorreo con los datos proporcionados.' })
   async shipingImport(@Body() data: ImportMiCorreoShipmentDto) {
     try {
       return await this.shipmentsService.importMiCorreoShipment(data);

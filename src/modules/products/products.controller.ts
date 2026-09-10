@@ -111,6 +111,8 @@ export class ProductsController {
   }
 
   @Get(':slug')
+  @UseTenantGuard()
+  @ApiHeader({ name: 'x-api-key', description: 'API Key (optional if using domain)', required: false })
   @ApiOperation({ summary: 'Obtener producto por slug', description: 'Permite obtener un producto específico por su slug.' })
   @ApiParam({ name: 'slug', description: 'Slug del producto a buscar.', example: 'laptop' })
   findBySlug(@Param('slug') slug: string) {

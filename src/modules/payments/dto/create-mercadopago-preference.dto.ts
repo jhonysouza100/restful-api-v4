@@ -59,8 +59,7 @@ class MercadopagoItemDto {
 class TenantDto {
   @ApiProperty({
     example: 'TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    description:
-      'Private API Key de Mercado Pago (usar variables de entorno en producción).',
+    description: 'Clave privada interna del tenant; nunca debe venir del cliente.',
   })
   @IsString()
   private_key!: string;

@@ -2,7 +2,7 @@
 
 API backend para ChillHop Studio, construido con NestJS y TypeScript. El repositorio contiene únicamente el backend: no hay frontend, aplicación móvil ni panel administrativo en este proyecto.
 
-> **Estado:** backend funcional en etapa de endurecimiento. Hay módulos operativos, pero seguridad multi-tenant, contratos externos, pagos y operación productiva todavía requieren trabajo antes de considerarlo listo para producción.
+> **Estado:** desarrollo activo. Se completó una primera ejecución del roadmap sobre configuración, CORS, aislamiento tenant, validación de productos y manejo de respuestas de Mercado Pago; pagos idempotentes, transacciones completas, operación y documentación avanzada siguen pendientes.
 
 ## Overview
 
@@ -14,18 +14,18 @@ La documentación de este archivo describe el estado observado en el código, no
 
 | Área | Estado | Observación |
 |---|---|---|
-| Arranque NestJS | Parcial | Existe bootstrap, validación de entorno y prefijo `/api`; el contrato de configuración es demasiado estricto y requiere revisión. |
+| Arranque NestJS | Implementado en desarrollo | Variables documentadas en `.env.example`, CORS usa `ALLOWED_ORIGINS` y `synchronize` queda limitado a desarrollo. Falta estrategia de migraciones. |
 | API versionada | Implementado | Versionado URI `v1`; Swagger se monta en `/docs`. |
-| Persistencia | Parcial | TypeORM + MySQL; `synchronize: true` está activo y no se observan migraciones. |
-| Autenticación | Parcial | Login y JWT con roles `ADMIN`/`ROOT`; falta cerrar protección de administración y expiración/contrato completo. |
-| Multi-tenancy | Parcial | `TenantGuard`, `TenantContextService`, `x-api-key` y `Origin`; existen rutas sin aislamiento consistente. |
-| Productos | Parcial | CRUD y Cloudinary presentes; validación, filtros, paginación, duplicación y stock requieren revisión. |
-| Órdenes | Parcial | Creación implementada; faltan validaciones server-side y estados transaccionales robustos. |
-| Pagos | Parcial | Preference y webhook de Mercado Pago presentes; falta idempotencia y validación fuerte. |
-| Envíos | Parcial | MiCorreo integrado en rates/import/agencies; respuestas y errores no están normalizados. |
-| Emails | Iniciado | SMTP/Nodemailer presente; requiere endurecimiento de adjuntos, errores y logs. |
+| Persistencia | Parcial | TypeORM + MySQL; falta reemplazar sincronización de desarrollo por migraciones productivas. |
+| Autenticación | Parcial avanzado | JWT usa `JWT_SECRET` validado desde entorno y la administración de tenants requiere `ROOT`; faltan pruebas manuales y endurecimiento de expiración/errores. |
+| Multi-tenancy | Parcial avanzado | Lecturas de productos, rutas públicas y administración de tenants quedaron más restringidas; órdenes y todos los flujos requieren revisión final. |
+| Productos | Parcial avanzado | DTOs básicos, filtros tenant-safe y lecturas por tenant mejorados; stock transaccional completo, archivos y errores siguen pendientes. |
+| Órdenes | Parcial | Creación y webhook existentes; todavía falta idempotencia y atomicidad completa de orden, pago e inventario. |
+| Pagos | Parcial avanzado | DTO ya no expone la clave privada al cliente y se validan respuestas HTTP externas; falta idempotencia, verificación de webhook y estados monotónicos. |
+| Envíos | Parcial | MiCorreo integrado en rates/import/agencies; respuestas, credenciales y errores aún requieren normalización. |
+| Emails | Parcial | SMTP/Nodemailer presente y se eliminó un log sensible; faltan límites de adjuntos y errores uniformes. |
 | Operación | Pendiente | No se observan Dockerfile, compose, CI/deploy reproducible ni health check. |
-| Documentación | Parcial | Swagger e READMEs internos existen, pero hay desalineación con rutas/campos reales. |
+| Documentación | Parcial avanzado | README actualizado con ejecución real, estado y estimaciones; Swagger e READMEs internos aún requieren alineación completa. |
 | Frontend/UI | Pendiente | Fuera del alcance de este repositorio. |
 
 ## Arquitectura
@@ -63,7 +63,7 @@ src/
 
 `PORT`, `ALLOWED_ORIGINS`, `MONGO_DB_URL`, `REDIS_URL`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `SERVER_URL`, `THROTTLER_LIMITER`, `ITEMS_PER_PAGE`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `JWT_SECRET`, `SMTP_USER`, `SMTP_PASS` y `APP_NAME`.
 
-El esquema actual exige también MongoDB y Redis aunque no se observa uso equivalente en los módulos revisados. Además, el entorno menciona `BREVO_API_KEY`, `MERCADOPAGO_API_KEY` y `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL`; deben clasificarse como usadas, opcionales o variables muertas en la Fase 0. No se deben copiar secretos reales al repositorio. Crear un `.env.example` sin valores sensibles forma parte del roadmap.
+Se creó `.env.example` sin secretos y se confirmó que MongoDB/Redis no forman parte del esquema activo actual. `BREVO_API_KEY`, `MERCADOPAGO_API_KEY` y `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` quedan como variables opcionales/no usadas por el runtime visible; no se deben copiar secretos reales al repositorio.
 
 ### Integraciones actuales
 
@@ -83,10 +83,10 @@ Las rutas exactas deben mantenerse sincronizadas con Swagger. Este inventario re
 | Grupo | Responsabilidad | Auth/tenant observado |
 |---|---|---|
 | Auth | Login, emisión/verificación JWT y roles | JWT parcial; revisar protección de administración. |
-| Tenants | Administración y resolución de tenants | Guard y permisos deben quedar explícitos; hoy es insuficiente. |
-| Products | Crear, listar, actualizar, eliminar y operar imágenes | Tenant aplicado de forma inconsistente en algunos endpoints. |
-| Orders | Crear/consultar órdenes y actualizar estados/stock | Requiere filtro tenant y validación de precios/cantidades. |
-| Payments | Crear preference y recibir notificaciones | Webhook debe ser público solo en recepción y seguro por verificación/idempotencia. |
+| Tenants | Administración y resolución de tenants | Creación y actualización requieren JWT con rol `ROOT`; revisar flujos de bootstrap y errores. |
+| Products | Crear, listar, actualizar, eliminar y operar imágenes | Lecturas principales requieren tenant; stock, archivos y manejo de excepciones aún necesitan cierre. |
+| Orders | Crear/consultar órdenes y actualizar estados/stock | Requiere terminar filtro tenant, validación de precios/cantidades e idempotencia. |
+| Payments | Crear preference y recibir notificaciones | Las respuestas HTTP externas se validan; webhook aún necesita verificación e idempotencia. |
 | Shipments | Rates, importación y agencias de MiCorreo | Credenciales y respuestas externas deben validarse. |
 | Emails | Envío SMTP y adjuntos | Requiere límites y manejo uniforme de excepciones. |
 | Uploads | Operaciones con Cloudinary | Revisar claves privadas y autorización por recurso. |
@@ -143,39 +143,39 @@ Las horas son para una sola persona y no incluyen tests automatizados. Cada tare
 
 | ID | Prioridad | Tarea | Dep. | Complejidad | h | Jornadas 4h / 2h | Estado |
 |---|---|---|---|---:|---:|---:|---|
-| F0-01 | P0 | Confirmar rutas `/api/v1`, `/docs` y respuestas | — | S | 2 | 0.5 / 1 | Pendiente |
-| F0-02 | P0 | Crear `.env.example` seguro | F0-01 | S | 2 | 0.5 / 1 | Pendiente |
-| F0-03 | P0 | Verificar variables usadas y variables muertas | F0-02 | S | 2 | 0.5 / 1 | Pendiente |
-| F0-04 | P0 | Validar arranque con entorno completo | F0-03 | S | 2 | 0.5 / 1 | Pendiente |
-| F0-05 | P0 | Definir datos mínimos y contrato de tenant | F0-01 | S | 2 | 0.5 / 1 | Pendiente |
-| F1-01 | P0 | Confirmar `JWT_SECRET` desde entorno y expiración | F0-04 | S | 3 | 0.75 / 1.5 | Pendiente |
-| F1-02 | P0 | Separar identificación pública y administración tenant | F0-05 | M | 4 | 1 / 2 | Pendiente |
-| F1-03 | P0 | Proteger rutas administrativas de tenants | F1-02 | M | 3 | 0.75 / 1.5 | Pendiente |
-| F1-04 | P0 | Normalizar `TenantGuard` y `TenantContextService` | F1-02 | M | 4 | 1 / 2 | Pendiente |
-| F1-05 | P0 | Aplicar filtro tenant a productos y órdenes | F1-04 | M | 4 | 1 / 2 | Pendiente |
-| F1-06 | P0 | Corregir CORS con `ALLOWED_ORIGINS` | F0-03 | S | 2 | 0.5 / 1 | Pendiente |
+| F0-01 | P0 | Confirmar rutas `/api/v1`, `/docs` y respuestas | — | S | 2 | 0.5 / 1 | Hecho |
+| F0-02 | P0 | Crear `.env.example` seguro | F0-01 | S | 2 | 0.5 / 1 | Hecho |
+| F0-03 | P0 | Verificar variables usadas y variables muertas | F0-02 | S | 2 | 0.5 / 1 | Hecho |
+| F0-04 | P0 | Validar arranque con entorno completo | F0-03 | S | 2 | 0.5 / 1 | Hecho: build OK |
+| F0-05 | P0 | Definir datos mínimos y contrato de tenant | F0-01 | S | 2 | 0.5 / 1 | Parcial |
+| F1-01 | P0 | Confirmar `JWT_SECRET` desde entorno y expiración | F0-04 | S | 3 | 0.75 / 1.5 | Parcial |
+| F1-02 | P0 | Separar identificación pública y administración tenant | F0-05 | M | 4 | 1 / 2 | Parcial |
+| F1-03 | P0 | Proteger rutas administrativas de tenants | F1-02 | M | 3 | 0.75 / 1.5 | Hecho: ROOT |
+| F1-04 | P0 | Normalizar `TenantGuard` y `TenantContextService` | F1-02 | M | 4 | 1 / 2 | Parcial |
+| F1-05 | P0 | Aplicar filtro tenant a productos y órdenes | F1-04 | M | 4 | 1 / 2 | Parcial: productos |
+| F1-06 | P0 | Corregir CORS con `ALLOWED_ORIGINS` | F0-03 | S | 2 | 0.5 / 1 | Hecho |
 | F1-07 | P0 | Normalizar HTTP status y excepciones | F0-01 | M | 4 | 1 / 2 | Pendiente |
-| F2-01 | P1 | Completar validadores de DTO de productos | F1-05 | M | 4 | 1 / 2 | Pendiente |
+| F2-01 | P1 | Completar validadores de DTO de productos | F1-05 | M | 4 | 1 / 2 | Parcial |
 | F2-02 | P1 | Revisar multipart, tamaño y tipo de archivos | F2-01 | S | 2 | 0.5 / 1 | Pendiente |
-| F2-03 | P1 | Corregir filtros y paginación tenant-safe | F2-01 | M | 4 | 1 / 2 | Pendiente |
+| F2-03 | P1 | Corregir filtros y paginación tenant-safe | F2-01 | M | 4 | 1 / 2 | Hecho: filtros base |
 | F2-04 | P1 | Revisar slugs, duplicación y borrado Cloudinary | F2-02 | M | 4 | 1 / 2 | Pendiente |
 | F2-05 | P1 | Hacer stock seguro y coherente | F2-03 | M | 4 | 1 / 2 | Pendiente |
-| F3-01 | P1 | Validar cantidades y precios desde servidor | F2-05 | M | 4 | 1 / 2 | Pendiente |
+| F3-01 | P1 | Validar cantidades y precios desde servidor | F2-05 | M | 4 | 1 / 2 | Parcial |
 | F3-02 | P1 | Completar estados y persistencia de órdenes | F3-01 | M | 4 | 1 / 2 | Pendiente |
 | F3-03 | P1 | Integrar rates MiCorreo sin confiar en cliente | F3-02 | M | 4 | 1 / 2 | Pendiente |
-| F3-04 | P1 | Crear preference con datos internos | F3-02 | M | 4 | 1 / 2 | Pendiente |
-| F4-01 | P1 | Alinear `notification_url` con ruta real | F3-04 | S | 2 | 0.5 / 1 | Pendiente |
-| F4-02 | P1 | Validar respuestas y credenciales Mercado Pago | F4-01 | M | 4 | 1 / 2 | Pendiente |
+| F3-04 | P1 | Crear preference con datos internos | F3-02 | M | 4 | 1 / 2 | Parcial |
+| F4-01 | P1 | Alinear `notification_url` con ruta real | F3-04 | S | 2 | 0.5 / 1 | Hecho: ruta actual |
+| F4-02 | P1 | Validar respuestas y credenciales Mercado Pago | F4-01 | M | 4 | 1 / 2 | Hecho: HTTP |
 | F4-03 | P1 | Añadir idempotencia del webhook | F4-02 | L | 4 | 1 / 2 | Pendiente |
 | F4-04 | P1 | Proteger transiciones de orden y stock | F4-03 | M | 4 | 1 / 2 | Pendiente |
-| F5-01 | P2 | Eliminar logs sensibles y debugging | F1-07 | S | 2 | 0.5 / 1 | Pendiente |
+| F5-01 | P2 | Eliminar logs sensibles y debugging | F1-07 | S | 2 | 0.5 / 1 | Parcial |
 | F5-02 | P2 | Endurecer email y adjuntos | F5-01 | M | 3 | 0.75 / 1.5 | Pendiente |
 | F5-03 | P2 | Normalizar errores MiCorreo | F3-03 | M | 3 | 0.75 / 1.5 | Pendiente |
 | F5-04 | P2 | Limitar y autorizar operaciones Cloudinary | F2-04 | M | 4 | 1 / 2 | Pendiente |
 | F6-01 | P2 | Agregar health check operativo | F0-04 | S | 2 | 0.5 / 1 | Pendiente |
 | F6-02 | P2 | Crear Dockerfile reproducible | F6-01 | M | 4 | 1 / 2 | Pendiente |
 | F6-03 | P2 | Documentar deploy y rollback | F6-02 | S | 2 | 0.5 / 1 | Pendiente |
-| F6-04 | P2 | Actualizar Swagger y READMEs internos | F1-07 | M | 4 | 1 / 2 | Pendiente |
+| F6-04 | P2 | Actualizar Swagger y READMEs internos | F1-07 | M | 4 | 1 / 2 | Parcial: README |
 | F6-05 | P3 | Limpieza de tipos, imports y módulos muertos | F6-04 | M | 2 | 0.5 / 1 | Pendiente |
 | F6-06 | P3 | Revisar índices y queries principales | F1-05 | M | 4 | 1 / 2 | Pendiente |
 
@@ -256,19 +256,19 @@ Si una tarea no puede cerrarse en 2–4 horas, dividirla por contrato: primero r
 
 Actualizar esta sección cuando se cierre una tarea:
 
-- [ ] Fase 0 — arranque y contrato operativo.
-- [ ] Fase 1 — seguridad y consistencia.
-- [ ] Fase 2 — productos e inventario.
-- [ ] Fase 3 — checkout y órdenes.
-- [ ] Fase 4 — pagos y webhooks.
-- [ ] Fase 5 — integraciones operativas.
-- [ ] Fase 6 — operación y documentación.
+- [x] Fase 0 — configuración, `.env.example` y build reproducible en desarrollo.
+- [~] Fase 1 — CORS, protección ROOT y filtros de productos aplicados; faltan errores y aislamiento integral.
+- [~] Fase 2 — validación básica y filtros tenant-safe aplicados; faltan stock, multipart y Cloudinary.
+- [~] Fase 3 — cálculo server-side existente y preference interna; faltan transacciones y estados completos.
+- [~] Fase 4 — URL y validación HTTP de Mercado Pago corregidas; falta idempotencia/verificación.
+- [~] Fase 5 — log sensible eliminado; faltan límites y normalización de integraciones.
+- [ ] Fase 6 — operación, health check, Docker y deploy reproducible.
 
 ## Resumen ejecutivo
 
-El repositorio ya tiene una base funcional para una API de catálogo y comercio, pero su estado es **parcial**, no production-ready: el principal riesgo está en el aislamiento multi-tenant, la configuración de seguridad, la consistencia de pagos/stock y la ausencia de operación reproducible. El MVP estimado requiere **82 horas base / 99 con buffer**; el roadmap completo requiere **108 horas base / 130 con buffer**, sin tests automatizados ni frontend.
+El repositorio mantiene una base funcional para una API de catálogo y comercio y está en **modo desarrollo activo**. La primera ejecución del roadmap dejó el build en verde, creó `.env.example`, corrigió CORS, limitó `synchronize` al desarrollo, protegió la administración de tenants con `ROOT`, aplicó filtros tenant-safe a lecturas de productos, añadió validación básica de DTOs y validó respuestas HTTP de Mercado Pago. No es production-ready: siguen pendientes idempotencia de webhooks, transacciones completas de stock/orden, normalización de errores, migraciones y operación reproducible.
 
-Las próximas cinco tareas son: **F0-01** confirmar contrato de rutas, **F0-02** crear `.env.example`, **F0-03** verificar variables usadas, **F0-04** validar arranque y **F0-05** fijar el contrato mínimo de tenant. Al completar esas tareas, el siguiente paso técnico es conectar `JWT_SECRET` y `ALLOWED_ORIGINS` al runtime y proteger la administración de tenants.
+La estimación original se conserva como referencia de alcance: MVP **82 horas base / 99 con buffer** y roadmap completo **108 horas base / 130 con buffer**, sin tests automatizados ni frontend. Las próximas cinco tareas son: **F1-07** normalizar excepciones, **F1-05** completar aislamiento en órdenes, **F2-05** hacer stock transaccional, **F4-03** implementar idempotencia y **F6-01** agregar health check.
 
 ## Licencia
 

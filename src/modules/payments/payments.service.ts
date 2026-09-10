@@ -51,8 +51,15 @@ export class PaymentsService {
         body: JSON.stringify(createMercadopagoPreferencePayload),
       })
 
-      const MercadopagoResponseInterface: MercadopagoPreferenceCreatedPayload = await response.json();
-      return MercadopagoResponseInterface;
+      const responseBody = await response.json();
+      if (!response.ok) {
+        throw new HttpException(
+          `Mercado Pago rechazó la preferencia: ${responseBody?.message || response.statusText}`,
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+
+      return responseBody as MercadopagoPreferenceCreatedPayload;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Error desconocido';
 
@@ -73,7 +80,15 @@ export class PaymentsService {
         }
       })
 
-      return await response.json();
+      const responseBody = await response.json();
+      if (!response.ok) {
+        throw new HttpException(
+          `Mercado Pago rechazó la consulta: ${responseBody?.message || response.statusText}`,
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+
+      return responseBody as MercadoPagoPayment;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Error desconocido';
 

@@ -1,5 +1,7 @@
 import { Body, Controller, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Role } from '../../common/enums/roles.enum';
+import { UseRoleAuthToken } from '../auth/decorators/auth.decorator';
 import { CreateTenantDto } from './dtos/create-tenant.dto';
 import { UpdateTenantDto } from './dtos/update-tenant.dto';
 import { TenantsService } from './tenants.service';
@@ -10,6 +12,7 @@ export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
   @Post()
+  @UseRoleAuthToken(Role.ROOT)
   @ApiOperation({ summary: 'Crear tenant', description: 'Crea un nuevo tenant con la información proporcionada.' })
   @ApiBody({ type: CreateTenantDto, description: 'Datos necesarios para crear un tenant.' })
   async create(@Body() createTenantDto: CreateTenantDto) {
@@ -21,6 +24,7 @@ export class TenantsController {
   }
 
   @Patch(':id')
+  @UseRoleAuthToken(Role.ROOT)
   @ApiOperation({ summary: 'Actualizar tenant', description: 'Actualiza los datos de un tenant existente por su id.' })
   @ApiParam({ name: 'id', type: Number, description: 'Identificador numérico del tenant.', example: 1 })
   @ApiBody({ type: UpdateTenantDto, description: 'Datos que se pueden modificar del tenant.' })
