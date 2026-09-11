@@ -312,9 +312,11 @@ export class ProductsService {
       throw new HttpException(`No se encontraron items para cambiar su estado`, HttpStatus.NOT_FOUND);
     }
 
-    products.map(async (item) => {
-      await this.productsRepo.update({ id: item.id }, {isActive: !item.isActive })
-    })
+    await Promise.all(
+      products.map(({id, isActive}) =>
+        this.productsRepo.update(id, { isActive: !isActive }),
+      ),
+    );
 
     throw new HttpException(`${ids.length} item(s) actualizado(s)`, HttpStatus.OK);
   }
