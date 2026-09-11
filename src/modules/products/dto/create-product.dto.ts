@@ -59,7 +59,6 @@ export class CreateProductDto {
   model?: string;
 
   @ApiProperty({
-    type: () => ProductSpecificationsInterface, 
     isArray: true, 
     example: [{ label: 'Conectividad', value: 'USB-C' }], 
     description: 'Lista de especificaciones del producto' 
@@ -67,22 +66,25 @@ export class CreateProductDto {
   specifications?: ProductSpecificationsInterface[];
   
   @ApiProperty({
-    type: () => ProductDimensionsInterface,
     example: { height: 500, width: 200, weight: 1000 },
     description: 'Dimensiones del producto'
   })
   dimensions?: ProductDimensionsInterface;
+
+  @ApiProperty({ 
+    example: { public_id: 'imagen123', secure_url: 'https://example.com/imagen.jpg' }, 
+    description: 'imágen principal del producto' 
+  })
+  image?: ProductImageInterface;
   
   @ApiProperty({ 
-    type: () => ProductImageInterface, 
     isArray: true, 
     example: [{ public_id: 'imagen123', secure_url: 'https://example.com/imagen.jpg' }], 
-    description: 'Lista de imágenes del producto' 
+    description: 'Galería de imágenes del producto' 
   })
   images?: ProductImageInterface[];
   
   @ApiProperty({
-    type: () => ProductColorInterface,
     example: { name: 'Rojo', value: '#f00'}
   })
   color?: ProductColorInterface;

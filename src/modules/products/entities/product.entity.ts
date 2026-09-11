@@ -45,6 +45,9 @@ export class Product {
   }
 
   @Column('simple-json', { nullable: true })
+  image: { public_id: string; secure_url: string };
+
+  @Column('simple-json', { nullable: true })
   images: { public_id: string; secure_url: string }[];
 
   @Column({ type: 'simple-json', nullable: true })
