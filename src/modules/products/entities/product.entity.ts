@@ -48,7 +48,7 @@ export class Product {
   image: { public_id: string; secure_url: string };
 
   @Column('simple-json', { nullable: true })
-  images: { public_id: string; secure_url: string }[];
+  gallery: { public_id: string; secure_url: string }[];
 
   @Column({ type: 'simple-json', nullable: true })
   color: {

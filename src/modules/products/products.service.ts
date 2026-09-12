@@ -18,12 +18,20 @@ export class ProductsService {
     private readonly uploadsService: UploadsService
   ) { }
 
-  async create(createProductDto: CreateProductDto, files: Express.Multer.File[]) {
+  async create(createProductDto: CreateProductDto, files: {
+    image?: Express.Multer.File;
+    gallery?: Express.Multer.File[] | undefined;
+  } = {}) {
     const newProduct = this.productsRepo.create({ ...createProductDto, tenant_id: this.authContextRequest.getAuthId() });
 
-    if (files && files.length > 0) {
-      const uploadedImages = await this.uploadsService.uploadImages(files, `products/${this.authContextRequest.getAuthCompany()}`);
-      newProduct.images = uploadedImages;
+    if (files.gallery && files.gallery.length > 0) {
+      const uploadedGallery = await this.uploadsService.uploadImages(files.gallery, `products/${this.authContextRequest.getAuthCompany()}`);
+      newProduct.gallery = uploadedGallery;
+    }
+
+    if (files.image) {
+      const [uploadedImage] = await this.uploadsService.uploadImages([files.image], `products/${this.authContextRequest.getAuthCompany()}`);
+      newProduct.image = uploadedImage;
     }
 
     await this.productsRepo.save(newProduct);
@@ -62,7 +70,7 @@ export class ProductsService {
       // Agregar condición exacta para el status si se pasó
       if (status !== undefined) {
         whereConditions['status'] = status === 'true';
-          whereConditions['stock'] = MoreThanOrEqual(1);
+        whereConditions['stock'] = MoreThanOrEqual(1);
       }
 
       if (tenant_id !== undefined) {
@@ -202,7 +210,7 @@ export class ProductsService {
 
     try {
       const parsedIds: unknown = JSON.parse(idsParam);
-  
+
       if (
         !Array.isArray(parsedIds) ||
         parsedIds.length === 0 ||
@@ -210,7 +218,7 @@ export class ProductsService {
       ) {
         throw new Error();
       }
-  
+
       ids = [...new Set(parsedIds as number[])];
     } catch {
       throw new HttpException(
@@ -232,38 +240,56 @@ export class ProductsService {
   // Este metodo se va utilizar en la "tienda" para crear el sitemap de todos los productos de forma dinámica. (Controller Scope).
   async getSitemapBySlug() {
     const tenantId = this.tenantContextService.getTenantId();
-    const productsBySlug = await this.productsRepo.find({ where: { isActive: true, tenant_id: tenantId }, select: ['slug', 'images', 'updatedAt'] });
+    const productsBySlug = await this.productsRepo.find({ where: { isActive: true, tenant_id: tenantId }, select: ['slug', 'image', 'updatedAt'] });
     return productsBySlug;
   }
 
-  async update(id: number, data: UpdateProductDto, files: Express.Multer.File[]) {
+  async update(id: number, data: UpdateProductDto, files: {
+    image?: Express.Multer.File;
+    gallery?: Express.Multer.File[];
+  } = {}) {
     const productFound = await this.findOne(id);
     if (productFound.tenant_id !== this.authContextRequest.getAuthId()) throw new HttpException('Usuario no autorizado', HttpStatus.UNAUTHORIZED);
 
+    if (data.image?.public_id === 'temp_id') {
+      data.image = undefined;
+    }
+
     // Antes de guardar el producto, quitamos las imágenes con public_id igual a "temp_id" del array de imágenes
-    if (data.images) {
-      data.images = data.images.filter((image) => image.public_id !== "temp_id");
+    if (data.gallery) {
+      data.gallery = data.gallery.filter((image) => image.public_id !== 'temp_id');
     }
 
     // Antes de guardar el producto, comparamos las images del productFound con las del data para actualizar "Cloudinay"
     // Si hay imágenes en el producto encontrado, filtramos las que no están en el nuevo array de imágenes
-    if (productFound.images) {
-      const imagesToDelete = productFound.images.filter((image) => {
-        return !data.images?.some((newImage) => newImage.public_id === image.public_id);
-      });
-
-      for (const image of imagesToDelete) {
-        // Se eliminan las imagenes asociadas en Cloudinary
-        await this.uploadsService.deleteImage(image.public_id);
+    const mediaToDelete: string[] = [];
+    if (data.image && productFound.image?.public_id !== data.image.public_id) {
+      if (productFound.image) mediaToDelete.push(productFound.image.public_id);
+    }
+    if (data.gallery) {
+      for (const image of productFound.gallery ?? []) {
+        if (!data.gallery.some((newImage) => newImage.public_id === image.public_id)) {
+          mediaToDelete.push(image.public_id);
+        }
       }
     }
 
-    if (files && files.length > 0) {
-      const uploadedImages = await this.uploadsService.uploadImages(files, `products/${this.authContextRequest.getAuthCompany()}`);
-      // A las imagenes filtradas, las concatenamos con las nuevas
-      const newImages = data.images ? [...data.images, ...uploadedImages] : uploadedImages;
-      // Actualizamos la data con las nuevas imágenes
-      data.images = newImages;
+    for (const publicId of mediaToDelete) {
+      // Se eliminan las imagenes asociadas en Cloudinary
+      await this.uploadsService.deleteImage(publicId);
+    }
+
+    if (files.image) {
+      if (productFound.image && !mediaToDelete.includes(productFound.image.public_id)) {
+        await this.uploadsService.deleteImage(productFound.image.public_id);
+      }
+      const [uploadedImage] = await this.uploadsService.uploadImages([files.image], `products/${this.authContextRequest.getAuthCompany()}`);
+      data.image = uploadedImage;
+    }
+
+    if (files.gallery?.length) {
+      const uploadedGallery = await this.uploadsService.uploadImages(files.gallery, `products/${this.authContextRequest.getAuthCompany()}`);
+      data.gallery = [...(data.gallery ?? productFound.gallery ?? []), ...uploadedGallery];
     }
 
     if (data.name !== undefined) {
@@ -295,7 +321,13 @@ export class ProductsService {
     }
 
     const duplicatedProducts = products.map(({ id, createdAt, updatedAt, ...product }, index) =>
-      this.productsRepo.create({ ...product, name: `${product.name} (Copia ${index + 1})`, tenant_id: tenantId, images: product.images?.map((image, idx) => ({ ...image, public_id: `copia_${idx + 1}` })) }),
+      this.productsRepo.create({
+        ...product,
+        name: `${product.name} (Copia ${index + 1})`,
+        tenant_id: tenantId,
+        image: product.image ? { ...product.image, public_id: `copia_${index + 1}` } : undefined,
+        gallery: product.gallery?.map((image, imageIndex) => ({ ...image, public_id: `copia_${index + 1}_${imageIndex + 1}` })),
+      }),
     );
 
     await this.productsRepo.save(duplicatedProducts);
@@ -313,7 +345,7 @@ export class ProductsService {
     }
 
     await Promise.all(
-      products.map(({id, isActive}) =>
+      products.map(({ id, isActive }) =>
         this.productsRepo.update(id, { isActive: !isActive }),
       ),
     );
@@ -342,9 +374,9 @@ export class ProductsService {
 
     await Promise.all(
       products.flatMap((product) =>
-        (product.images || []).map((image) =>
-          this.uploadsService.deleteImage(image.public_id),
-        ),
+        [product.image, ...(product.gallery || [])]
+          .filter((image): image is { public_id: string; secure_url: string } => Boolean(image))
+          .map((image) => this.uploadsService.deleteImage(image.public_id)),
       ),
     );
 

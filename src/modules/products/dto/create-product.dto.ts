@@ -82,7 +82,7 @@ export class CreateProductDto {
     example: [{ public_id: 'imagen123', secure_url: 'https://example.com/imagen.jpg' }], 
     description: 'Galería de imágenes del producto' 
   })
-  images?: ProductImageInterface[];
+  gallery?: ProductImageInterface[];
   
   @ApiProperty({
     example: { name: 'Rojo', value: '#f00'}

@@ -76,7 +76,7 @@ export class OrdersService {
             price: productFound.price,
             discount: productFound.discount || 0,
             subtotal: (Number(productFound.price) * (1 - Number(productFound.discount) / 100)),
-            image_url: productFound?.images?.at(0)?.secure_url
+            image_url: productFound?.image?.secure_url
           }
 
         } catch (error: any) {

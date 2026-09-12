@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Delete, Get, Injectable, Param, Patch, PipeTransform, Post, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
@@ -55,21 +55,26 @@ export class ProductsController {
         product: {
           $ref: getSchemaPath(CreateProductDto)
         },
-        files: {
+        image: { type: 'string', format: 'binary', description: 'Imagen principal opcional.' },
+        gallery: {
           type: 'array',
-          description: 'Archivos de imagenes (opcionales) para adjuntar al producto.',
-          items: {
-            type: 'string',
-            format: 'binary',
-          },
+          description: 'Imágenes adicionales opcionales del producto.',
+          items: { type: 'string', format: 'binary' },
         },
       },
       required: ['product'],
     },
   })
-  // Interceptor para manejar la carga de archivos. Se espera que los archivos se envíen en el campo 'files' del formulario multipart/form-data.
-  @UseInterceptors(FilesInterceptor('files'))
-  create(@Body('product', ParseJSONPipe) createProductDto: CreateProductDto, @UploadedFiles() files: Express.Multer.File[]) {
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'image', maxCount: 1 },
+    { name: 'gallery', maxCount: 20 },
+  ]))
+  create(
+    @Body('product', ParseJSONPipe) createProductDto: CreateProductDto,
+    @UploadedFiles() files: {
+      image?: Express.Multer.File,
+      gallery?: Express.Multer.File[],
+    }) {
     try {
       return this.productsService.create(createProductDto, files)
     } catch (error: any) {
@@ -154,24 +159,27 @@ export class ProductsController {
         product: {
           $ref: getSchemaPath(UpdateProductDto)
         },
-        files: {
+        image: { type: 'string', format: 'binary', description: 'Nueva imagen principal opcional.' },
+        gallery: {
           type: 'array',
-          description: 'Archivos de imagenes (opcionales) para adjuntar al producto.',
-          items: {
-            type: 'string',
-            format: 'binary',
-          },
+          description: 'Imágenes adicionales nuevas opcionales del producto.',
+          items: { type: 'string', format: 'binary' },
         },
       },
       required: ['product'],
     },
   })
-  // Interceptor para manejar la carga de archivos. Se espera que los archivos se envíen en el campo 'files' del formulario multipart/form-data.
-  @UseInterceptors(FilesInterceptor('files'))
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'image', maxCount: 1 },
+    { name: 'gallery', maxCount: 20 },
+  ]))
   update(
     @Param('id') id: string,
     @Body('product', ParseJSONPipe) product: UpdateProductDto,
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFiles() files: {
+      image?: Express.Multer.File;
+      gallery?: Express.Multer.File[];
+    },
   ) {
     try {
       return this.productsService.update(+id, product, files);
