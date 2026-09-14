@@ -1,17 +1,17 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { TenantContextService } from '../tenant.context';
+import { TenantContext } from '../tenant.context';
 
 @Injectable()
 export class TenantInterceptor implements NestInterceptor {
-  constructor(private readonly tenantContextService: TenantContextService) {}
+  constructor(private readonly tenantContext: TenantContext) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     const tenant = request.tenant;
 
     if (tenant) {
-      this.tenantContextService.setTenantData(tenant);
+      this.tenantContext.setTenantData(tenant);
     }
 
     return next.handle();

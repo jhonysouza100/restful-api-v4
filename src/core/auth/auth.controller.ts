@@ -24,7 +24,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Verificar token', description: 'Verifica la validez de un token JWT.' })
   verify(@Req() request: any) {
     try {
-        return request.user;
+        return request.admin;
     } catch (error) {
       return error.message;
     }

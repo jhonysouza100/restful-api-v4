@@ -1,14 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { TenantContextService } from '../../core/tenant/tenant.context';
+import { TenantContext } from '../../core/tenant/tenant.context';
 import { SendEmailDto } from './dtos/send-mail.dto';
 
 @Injectable()
 export class EmailsService {
-  constructor(private readonly tenantContextService: TenantContextService) {}
+  constructor(private readonly tenantContext: TenantContext) {}
 
   private getTenantSMTP(): { user: string, pass: string } {
-    return this.tenantContextService.getTenantSMTP();
+    return this.tenantContext.getTenantSMTP();
   }
 
   async sendMail(data: SendEmailDto, files: Express.Multer.File[] = [], credentials?: {

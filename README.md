@@ -151,7 +151,7 @@ Las horas son para una sola persona y no incluyen tests automatizados. Cada tare
 | F1-01 | P0 | Confirmar `JWT_SECRET` desde entorno y expiración | F0-04 | S | 3 | 0.75 / 1.5 | Parcial |
 | F1-02 | P0 | Separar identificación pública y administración tenant | F0-05 | M | 4 | 1 / 2 | Parcial |
 | F1-03 | P0 | Proteger rutas administrativas de tenants | F1-02 | M | 3 | 0.75 / 1.5 | Hecho: ROOT |
-| F1-04 | P0 | Normalizar `TenantGuard` y `TenantContextService` | F1-02 | M | 4 | 1 / 2 | Parcial |
+| F1-04 | P0 | Normalizar `TenantGuard` y `TenantContext` | F1-02 | M | 4 | 1 / 2 | Parcial |
 | F1-05 | P0 | Aplicar filtro tenant a productos y órdenes | F1-04 | M | 4 | 1 / 2 | Parcial: productos |
 | F1-06 | P0 | Corregir CORS con `ALLOWED_ORIGINS` | F0-03 | S | 2 | 0.5 / 1 | Hecho |
 | F1-07 | P0 | Normalizar HTTP status y excepciones | F0-01 | M | 4 | 1 / 2 | Pendiente |
@@ -212,12 +212,7 @@ Puede esperar fuera del MVP: emails refinados, MiCorreo avanzado, Cloudinary ref
 
 **Auditar y corregir la configuración de arranque y seguridad — 2–3 horas.**
 
-1. Revisar `src/common/config/env.config.ts` y clasificar variables obligatorias.
-2. Confirmar que `src/common/constants.ts` usa el `JWT_SECRET` real del entorno.
-3. Conectar `ALLOWED_ORIGINS` en `src/main.ts` y eliminar `origin: '*'` con credenciales.
-4. Documentar `.env.example` sin secretos.
-5. Confirmar las rutas `/api/v1` y `/docs` contra Swagger.
-6. Arrancar el proyecto con una configuración reproducible y registrar cualquier variable incompatible.
+1. 
 
 **Resultado esperado:** el proyecto arranca sin contradicciones entre documentación y runtime. Después de esta tarea, proteger la administración de tenants es el siguiente bloque P0.
 

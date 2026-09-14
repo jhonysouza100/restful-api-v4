@@ -2,7 +2,7 @@ import { Injectable, Scope } from '@nestjs/common';
 import { CorreoArgentinoDto, CreatePrivateKeysDto } from './dtos/update-tenant.dto';
 
 /**
- * TenantContextService
+ * TenantContext
  * 
  * Servicio de contexto multi-tenant con SCOPE REQUEST.
  * 
@@ -16,7 +16,7 @@ import { CorreoArgentinoDto, CreatePrivateKeysDto } from './dtos/update-tenant.d
  * - Los datos se limpian automáticamente al terminar el request
  */
 @Injectable({ scope: Scope.REQUEST })
-export class TenantContextService {
+export class TenantContext {
   /**
    * Almacena datos del tenant actual
    * Se limpia automáticamente al finalizar el request

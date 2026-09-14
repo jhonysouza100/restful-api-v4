@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { TenantContextService } from '../../core/tenant/tenant.context';
+import { TenantContext } from '../../core/tenant/tenant.context';
 import { GenerateMiCorreoRatesDto } from './dto/generate-micorreo-rates.dto';
 import { ImportMiCorreoShipmentDto } from './dto/import-micorreo-shipment.dto';
 import { MiCorreoAgenciesResponseInterface } from './interfaces/micorreo-agencies.interface';
@@ -8,13 +8,13 @@ import { MiCorreoRatesResponseInterface } from './interfaces/micorreo-rates.inte
 @Injectable()
 export class ShipmentsService {
   constructor(
-    private readonly tenantContextService: TenantContextService,
+    private readonly tenantContext: TenantContext,
   ) { }
 
   private async getMiCorreoToken(credentials?: { user?: string, password?: string }): Promise<string> {
     try {
-      const user = credentials?.user || this.tenantContextService.getMiCorreoCredentials()?.user;
-      const password = credentials?.password || this.tenantContextService.getMiCorreoCredentials()?.password;
+      const user = credentials?.user || this.tenantContext.getMiCorreoCredentials()?.user;
+      const password = credentials?.password || this.tenantContext.getMiCorreoCredentials()?.password;
       const bufferCredentials = Buffer.from(`${user}:${password}`).toString("base64");
       const response = await fetch("https://api.correoargentino.com.ar/micorreo/v1/token", {
         method: "POST",
@@ -42,8 +42,8 @@ export class ShipmentsService {
         },
         body: JSON.stringify({
           ...data,
-          customerId: this.tenantContextService.getMiCorreoCredentials()?.customer_id,
-          postalCodeOrigin: this.tenantContextService.getMiCorreoCredentials()?.postal_code
+          customerId: this.tenantContext.getMiCorreoCredentials()?.customer_id,
+          postalCodeOrigin: this.tenantContext.getMiCorreoCredentials()?.postal_code
         }),
       }).then((response) => response.json())
         .then((response) => {
@@ -73,10 +73,10 @@ export class ShipmentsService {
 
       const body = {
         ...data,
-        customerId: credentials?.customer_id || this.tenantContextService.getMiCorreoCredentials()?.customer_id,
+        customerId: credentials?.customer_id || this.tenantContext.getMiCorreoCredentials()?.customer_id,
         sender: {
           ...data?.sender,
-          name: data.sender?.name || this.tenantContextService.getFullName()
+          name: data.sender?.name || this.tenantContext.getFullName()
         }
       }
 
@@ -123,7 +123,7 @@ export class ShipmentsService {
     const token = await this.getMiCorreoToken();
 
     return new Promise((resolve, reject) => {
-      fetch(`https://api.correoargentino.com.ar/micorreo/v1/agencies?customerId=${this.tenantContextService.getMiCorreoCredentials()?.customer_id}&provinceCode=${provinceCode}`, {
+      fetch(`https://api.correoargentino.com.ar/micorreo/v1/agencies?customerId=${this.tenantContext.getMiCorreoCredentials()?.customer_id}&provinceCode=${provinceCode}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`

@@ -3,14 +3,14 @@ import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable, U
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { jwtConstants } from '../../../common/constants';
-import { AuthContextRequest } from '../auth.context';
+import { AdminContext } from '../auth.context';
 import { TokenInterface } from '../interfaces/token.interface';
 
 @Injectable()
 export class BearerGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly authContextRequest: AuthContextRequest
+    private readonly adminContext: AdminContext
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -26,10 +26,10 @@ export class BearerGuard implements CanActivate {
       // console.log("Payload verificado:", payload); // Log the payload for debugging purposes
 
       // (Antes) Guarda las credenciales del auth en un contexto
-      // Otros servicios pueden acceder al tenant actual inyectando AuthContextRequest
-      this.authContextRequest.setAuthData(payload);
+      // Otros servicios pueden acceder al tenant actual inyectando AdminContext
+      this.adminContext.setAuthData(payload);
 
-      request['user'] = payload;
+      request['admin'] = payload;
     } catch {
       throw new HttpException('Sesión expirada', HttpStatus.NO_CONTENT);
     }

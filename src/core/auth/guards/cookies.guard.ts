@@ -3,14 +3,14 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { JwtService } from "@nestjs/jwt";
 import { Request } from 'express';
 import { jwtConstants } from "../../../common/constants";
-import { AuthContextRequest } from "../auth.context";
+import { AdminContext } from "../auth.context";
 import { TokenInterface } from '../interfaces/token.interface';
 
 @Injectable()
 export class CookiesGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly authContextRequest: AuthContextRequest
+    private readonly adminContext: AdminContext
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -26,11 +26,11 @@ export class CookiesGuard implements CanActivate {
       // console.log(payload); // Log the payload for debugging purposes
 
       // (Antes) Guarda las credenciales del auth en un contexto
-      // Otros servicios pueden acceder al tenant actual inyectando AuthContextRequest
-      this.authContextRequest.setAuthData(payload);
+      // Otros servicios pueden acceder al tenant actual inyectando AdminContext
+      this.adminContext.setAuthData(payload);
 
 
-      request['user'] = payload;
+      request['admin'] = payload;
     } catch {
       throw new UnauthorizedException('Token invalido o expirado');
     }

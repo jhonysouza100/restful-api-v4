@@ -1,7 +1,7 @@
 import { Injectable, Scope } from "@nestjs/common";
 
 @Injectable({ scope: Scope.REQUEST })
-export class AuthContextRequest {
+export class AdminContext {
   private authData: {
     id: number,
     company: string

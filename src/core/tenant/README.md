@@ -151,14 +151,14 @@ Algunos de los endpoints requieren identificar el tenant mediante:
 Flujo:
 1. Extrae tenant del request por API Key o dominio
 2. Si no encuentra tenant → Lanza `UnauthorizedException`
-3. Si encuentra tenant → Guarda en `TenantContextService` para acceso posterior
+3. Si encuentra tenant → Guarda en `TenantContext` para acceso posterior
 4. Permite continuar con el request
 
 **Métodos de extracción** (en orden de prioridad):
 - Header `x-api-key` → Busca por apiKey
 - Header/Origin `origin` → Busca por dominio
 
-### Service: TenantContextService (`tenant-context.service.ts`)
+### Service: TenantContext (`tenant-context.service.ts`)
 **Scope REQUEST** - Se crea una instancia por cada request
 
 Gestiona el contexto del tenant actual en ese request:
@@ -181,8 +181,8 @@ getTanantMercadopago()            // Obtiene token Mercadopago
 2. TenantGuard intercepta
 3. Guard extrae tenant mediante API Key o dominio
 4. Si no existe → 401 Unauthorized
-5. Guard guarda tenant en TenantContextService
-6. Otros servicios acceden al tenant actual via TenantContextService
+5. Guard guarda tenant en TenantContext
+6. Otros servicios acceden al tenant actual via TenantContext
 7. Request se procesa en contexto del tenant específico
 ```
 
@@ -199,11 +199,11 @@ Headers: x-api-key: abc123xyz...
 
 ### Acceder Datos del Tenant Actual (desde un Servicio)
 ```typescript
-constructor(private tenantContextService: TenantContextService) {}
+constructor(private tenantContext: TenantContext) {}
 
 async sendEmail() {
-  const tenantId = this.tenantContextService.getTenantId();
-  const email = this.tenantContextService.getTenantSMTP();
+  const tenantId = this.tenantContext.getTenantId();
+  const email = this.tenantContext.getTenantSMTP();
   // Usa estos datos...
 }
 ```
@@ -211,14 +211,14 @@ async sendEmail() {
 ## Puntos Importantes para Mantenimiento
 
 ### Seguridad
-- **Scope REQUEST**: `TenantContextService` se crea por request → No hay mezcla de datos entre tenants
+- **Scope REQUEST**: `TenantContext` se crea por request → No hay mezcla de datos entre tenants
 - **Select selectivo**: Queries solo retornan campos necesarios (ej: no retorna password en FindByApiKey)
 - **Hashing**: Contraseñas hasheadas con bcrypt, nunca almacenadas en texto plano
 
 ### Integración
 - **Módulo Global**: El CoreModule es `@Global()` → Disponible en toda la app
 - **Exporta**: Guard, Interceptor y Services se exportan para uso en otros módulos
-- **Multi-tenant automático**: Servicios que usan `TenantContextService` obtienen datos del tenant actual automáticamente
+- **Multi-tenant automático**: Servicios que usan `TenantContext` obtienen datos del tenant actual automáticamente
 
 ### Métodos No Usados
 - `findAll()` - Traería todos los tenants (comentado/no usado)

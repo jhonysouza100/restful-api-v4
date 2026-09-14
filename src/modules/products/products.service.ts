@@ -2,8 +2,8 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, MoreThanOrEqual, Repository } from 'typeorm';
 import { env } from '../../common/config/env.config';
-import { AuthContextRequest } from '../../core/auth/auth.context';
-import { TenantContextService } from '../../core/tenant/tenant.context';
+import { AdminContext } from '../../core/auth/auth.context';
+import { TenantContext } from '../../core/tenant/tenant.context';
 import { UploadsService } from '../uploads/uploads.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -13,8 +13,8 @@ import { Product } from './entities/product.entity';
 export class ProductsService {
   constructor(
     @InjectRepository(Product) private readonly productsRepo: Repository<Product>,
-    private readonly authContextRequest: AuthContextRequest,
-    private readonly tenantContextService: TenantContextService,
+    private readonly adminContext: AdminContext,
+    private readonly tenantContext: TenantContext,
     private readonly uploadsService: UploadsService
   ) { }
 
@@ -22,15 +22,15 @@ export class ProductsService {
     image?: Express.Multer.File;
     gallery?: Express.Multer.File[] | undefined;
   } = {}) {
-    const newProduct = this.productsRepo.create({ ...createProductDto, tenant_id: this.authContextRequest.getAuthId() });
+    const newProduct = this.productsRepo.create({ ...createProductDto, tenant_id: this.adminContext.getAuthId() });
 
     if (files.gallery && files.gallery.length > 0) {
-      const uploadedGallery = await this.uploadsService.uploadImages(files.gallery, `products/${this.authContextRequest.getAuthCompany()}`);
+      const uploadedGallery = await this.uploadsService.uploadImages(files.gallery, `products/${this.adminContext.getAuthCompany()}`);
       newProduct.gallery = uploadedGallery;
     }
 
     if (files.image) {
-      const [uploadedImage] = await this.uploadsService.uploadImages([files.image], `products/${this.authContextRequest.getAuthCompany()}`);
+      const [uploadedImage] = await this.uploadsService.uploadImages([files.image], `products/${this.adminContext.getAuthCompany()}`);
       newProduct.image = uploadedImage;
     }
 
@@ -149,7 +149,7 @@ export class ProductsService {
   }
 
   // Incrementa las unidades vendidas de forma transaccional y aislada por tienda.
-  async incrementSales(data?: { item_id: number; quantity: number }[], tenantId = this.tenantContextService.getTenantId()) {
+  async incrementSales(data?: { item_id: number; quantity: number }[], tenantId = this.tenantContext.getTenantId()) {
     if (!data?.length) return;
 
     const quantities = new Map<number, number>();
@@ -232,14 +232,14 @@ export class ProductsService {
 
   // Este metodo se va utilizar en la "tienda" para cargar la pagina de un producto por el slug (nombre amigable para URL). (Controller Scope).
   async findBySlug(slug: string) {
-    const product = await this.productsRepo.findOne({ where: { slug, tenant_id: this.tenantContextService.getTenantId() }, relations: ['questions', 'reviews'] }); // { where: { name: Like(`%${name}%`) } }
+    const product = await this.productsRepo.findOne({ where: { slug, tenant_id: this.tenantContext.getTenantId() }, relations: ['questions', 'reviews'] }); // { where: { name: Like(`%${name}%`) } }
     if (!product) throw new HttpException('No se encontro ningún producto con ese nombre', HttpStatus.NOT_FOUND);
     return product;
   }
 
   // Este metodo se va utilizar en la "tienda" para crear el sitemap de todos los productos de forma dinámica. (Controller Scope).
   async getSitemapBySlug() {
-    const tenantId = this.tenantContextService.getTenantId();
+    const tenantId = this.tenantContext.getTenantId();
     const productsBySlug = await this.productsRepo.find({ where: { isActive: true, tenant_id: tenantId }, select: ['slug', 'image', 'updatedAt'] });
     return productsBySlug;
   }
@@ -249,7 +249,7 @@ export class ProductsService {
     gallery?: Express.Multer.File[];
   } = {}) {
     const productFound = await this.findOne(id);
-    if (productFound.tenant_id !== this.authContextRequest.getAuthId()) throw new HttpException('Usuario no autorizado', HttpStatus.UNAUTHORIZED);
+    if (productFound.tenant_id !== this.adminContext.getAuthId()) throw new HttpException('Usuario no autorizado', HttpStatus.UNAUTHORIZED);
 
     if (data.image?.public_id === 'temp_id') {
       data.image = undefined;
@@ -283,12 +283,12 @@ export class ProductsService {
       if (productFound.image && !mediaToDelete.includes(productFound.image.public_id)) {
         await this.uploadsService.deleteImage(productFound.image.public_id);
       }
-      const [uploadedImage] = await this.uploadsService.uploadImages([files.image], `products/${this.authContextRequest.getAuthCompany()}`);
+      const [uploadedImage] = await this.uploadsService.uploadImages([files.image], `products/${this.adminContext.getAuthCompany()}`);
       data.image = uploadedImage;
     }
 
     if (files.gallery?.length) {
-      const uploadedGallery = await this.uploadsService.uploadImages(files.gallery, `products/${this.authContextRequest.getAuthCompany()}`);
+      const uploadedGallery = await this.uploadsService.uploadImages(files.gallery, `products/${this.adminContext.getAuthCompany()}`);
       data.gallery = [...(data.gallery ?? productFound.gallery ?? []), ...uploadedGallery];
     }
 
@@ -312,7 +312,7 @@ export class ProductsService {
   }
 
   async duplicate(ids: number[]) {
-    const tenantId = this.authContextRequest.getAuthId();
+    const tenantId = this.adminContext.getAuthId();
 
     const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } });
 
@@ -336,7 +336,7 @@ export class ProductsService {
   }
 
   async desactive(ids: number[]) {
-    const tenantId = this.authContextRequest.getAuthId();
+    const tenantId = this.adminContext.getAuthId();
 
     const products = await this.productsRepo.find({ where: { id: In(ids), tenant_id: tenantId } })
 
@@ -356,7 +356,7 @@ export class ProductsService {
   async remove(idsParam: string) {
     const ids = this.parseStringToArray(idsParam);
 
-    const tenantId = this.authContextRequest.getAuthId();
+    const tenantId = this.adminContext.getAuthId();
     const products = await this.productsRepo.find({
       where: { id: In(ids), tenant_id: tenantId },
     });

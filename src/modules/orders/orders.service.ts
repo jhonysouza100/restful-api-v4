@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { env } from '../../common/config/env.config';
-import { TenantContextService } from '../../core/tenant/tenant.context';
+import { TenantContext } from '../../core/tenant/tenant.context';
 import { TenantsService } from '../../core/tenant/tenants.service';
 import { SendEmailDto } from '../emails/dtos/send-mail.dto';
 import { EmailsService } from '../emails/emails.service';
@@ -29,7 +29,7 @@ export class OrdersService {
     @InjectRepository(Order) private readonly ordersRepo: Repository<Order>,
     private readonly productsService: ProductsService,
     private readonly paymentsService: PaymentsService,
-    private readonly tenantContextService: TenantContextService,
+    private readonly tenantContext: TenantContext,
     private readonly tenantService: TenantsService,
     private readonly shipmentService: ShipmentsService,
     private readonly emailsService: EmailsService
@@ -65,7 +65,7 @@ export class OrdersService {
       data.items.map(async (el) => {
         try {
           // Busca y valida si un producto esta activo y/o posee stock y verifica la tenencia
-          const tenantId = this.tenantContextService.getTenantId();
+          const tenantId = this.tenantContext.getTenantId();
           const productFound = await this.productsService.validateProductForSale(el.item_id, el.quantity, tenantId);
 
           // Devuelve un "item" (para crear una nueva "order") con los datos de un producto buscado en la database
@@ -90,7 +90,7 @@ export class OrdersService {
     const newOrderPayload: OrderInterface = {
       // coupon: { code: couponFound?.code || null, discount: couponFound?.discount || null },
       items: [...productsList],
-      tenant_id: this.tenantContextService.getTenantId(),
+      tenant_id: this.tenantContext.getTenantId(),
       user_id: data?.user_id || 0,
       subtotal: subtotal,
       total: Number(subtotal) - (Number(subtotal) * Number(couponFound?.discount || 0) / 100)
@@ -114,9 +114,9 @@ export class OrdersService {
       })),
       order_id: savedOrder.id,
       tenant: {
-        company: this.tenantContextService.getTenantCompany(),
-        private_key: this.tenantContextService.getTanantMercadopago(),
-        domain: this.tenantContextService.getTenantDomain()
+        company: this.tenantContext.getTenantCompany(),
+        private_key: this.tenantContext.getTanantMercadopago(),
+        domain: this.tenantContext.getTenantDomain()
       }
     }
 
