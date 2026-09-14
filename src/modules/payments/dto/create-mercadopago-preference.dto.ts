@@ -18,7 +18,10 @@ class MercadopagoItemDto {
   @IsPositive()
   id!: number;
 
-  @ApiProperty({ example: 'Camiseta', description: 'Nombre/titulo del producto' })
+  @ApiProperty({
+    example: 'Camiseta',
+    description: 'Nombre/titulo del producto',
+  })
   @IsString()
   title!: string;
 
@@ -37,7 +40,7 @@ class MercadopagoItemDto {
   /**
    * El precio unitario debe ser calculado durante la creacion de la orden
    * unit_price: Number(el.price) - (Number(el.price) * Number((el?.discount || 0) + el.coupon || 0)) / 100,
-  */
+   */
   price_with_discounts!: number;
 
   @ApiProperty({ example: 'Alguna descripcion', required: false })
@@ -49,7 +52,11 @@ class MercadopagoItemDto {
   @IsString()
   category?: string;
 
-  @ApiProperty({ example: 'https://example.com/image.jpg', description: 'URL de la imagen del producto', required: false })
+  @ApiProperty({
+    example: 'https://example.com/image.jpg',
+    description: 'URL de la imagen del producto',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   @IsUrl()
@@ -59,12 +66,16 @@ class MercadopagoItemDto {
 class TenantDto {
   @ApiProperty({
     example: 'TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    description: 'Clave privada interna del tenant; nunca debe venir del cliente.',
+    description:
+      'Clave privada interna del tenant; nunca debe venir del cliente.',
   })
   @IsString()
   private_key!: string;
 
-  @ApiProperty({ example: 'mycompany.com', description: 'Dominio de la empresa' })
+  @ApiProperty({
+    example: 'mycompany.com',
+    description: 'Dominio de la empresa',
+  })
   @IsString()
   domain!: string;
 
@@ -97,14 +108,20 @@ class PaymentMethodIdDto {
 }
 
 class PaymentMethodsDto {
-  @ApiProperty({ example: [{ id: 'credit_card' }], description: 'Tipos de pago excluidos' })
+  @ApiProperty({
+    example: [{ id: 'credit_card' }],
+    description: 'Tipos de pago excluidos',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PaymentMethodIdDto)
   excluded_payment_types?: PaymentMethodIdDto[];
 
-  @ApiProperty({ example: [{ id: 'visa' }], description: 'Métodos de pago excluidos' })
+  @ApiProperty({
+    example: [{ id: 'visa' }],
+    description: 'Métodos de pago excluidos',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -117,7 +134,10 @@ class PaymentMethodsDto {
   @Min(1)
   installments?: number;
 
-  @ApiProperty({ example: 'visa', description: 'ID del método de pago predeterminado' })
+  @ApiProperty({
+    example: 'visa',
+    description: 'ID del método de pago predeterminado',
+  })
   @IsOptional()
   @IsString()
   default_payment_method_id?: string;
@@ -135,7 +155,10 @@ export class CreateMercadopagoPreferenceDto {
   @Type(() => MercadopagoItemDto)
   items?: MercadopagoItemDto[];
 
-  @ApiProperty({ type: TenantDto, description: 'Información de la empresa / tenancy' })
+  @ApiProperty({
+    type: TenantDto,
+    description: 'Información de la empresa / tenancy',
+  })
   @ValidateNested()
   @Type(() => TenantDto)
   tenant!: TenantDto;
@@ -151,7 +174,6 @@ export class CreateMercadopagoPreferenceDto {
   @Type(() => BackUrlsDto)
   back_urls?: BackUrlsDto;
 
-  
   @ApiProperty({ type: PaymentMethodsDto, required: false })
   @IsOptional()
   @ValidateNested()

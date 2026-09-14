@@ -1,10 +1,18 @@
-import { BeforeInsert, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  BeforeInsert,
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 // import { QnA } from './QnA.entity';
 // import { Review } from './review.entity';
 import { ProductCategoryEnum } from '../enums/products.enum';
 
 @Entity('products')
-@Index(["tenant_id", "id"]) // Indice compuesto para acelerar las busquedas por tenant
+@Index(['tenant_id', 'id']) // Indice compuesto para acelerar las busquedas por tenant
 export class Product {
   @PrimaryGeneratedColumn()
   id: number;
@@ -24,7 +32,12 @@ export class Product {
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ type: 'enum', enum: ProductCategoryEnum, nullable: true, default: ProductCategoryEnum.OTHER })
+  @Column({
+    type: 'enum',
+    enum: ProductCategoryEnum,
+    nullable: true,
+    default: ProductCategoryEnum.OTHER,
+  })
   category: ProductCategoryEnum;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -34,15 +47,15 @@ export class Product {
   model: string;
 
   @Column({ type: 'json', nullable: true })
-  specifications: { label: string, value: string }[];
+  specifications: { label: string; value: string }[];
 
   @Column('simple-json', { nullable: true })
   dimensions: {
-    height: number,
-    length: number,
-    weight: number,
-    width: number
-  }
+    height: number;
+    length: number;
+    weight: number;
+    width: number;
+  };
 
   @Column('simple-json', { nullable: true })
   image: { public_id: string; secure_url: string };
@@ -52,8 +65,8 @@ export class Product {
 
   @Column({ type: 'simple-json', nullable: true })
   color: {
-    name: string,
-    value: string,
+    name: string;
+    value: string;
   };
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
@@ -73,9 +86,9 @@ export class Product {
 
   @Column({ type: 'simple-json', nullable: true })
   performance: {
-    sales: number,
-    rating: number
-  }
+    sales: number;
+    rating: number;
+  };
 
   @Column({ type: 'boolean', nullable: true, default: true })
   isActive: boolean;

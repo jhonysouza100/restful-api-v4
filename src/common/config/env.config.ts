@@ -6,20 +6,38 @@ import { z } from 'zod';
  * Define las variables requeridas y opcionales del proyecto
  */
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
   PORT: z.string().min(1, 'PORT is required.').transform(Number),
-  ALLOWED_ORIGINS: z.string().min(1, 'ALLOWED_ORIGINS is required.').transform((val) => val.split(',').map((origin) => origin.trim())),
+  ALLOWED_ORIGINS: z
+    .string()
+    .min(1, 'ALLOWED_ORIGINS is required.')
+    .transform((val) => val.split(',').map((origin) => origin.trim())),
   DATABASE_HOST: z.string().min(1, 'DATABASE_HOST is required.'),
-  DATABASE_PORT: z.string().min(1, 'DATABASE_PORT is required.').transform(Number),
+  DATABASE_PORT: z
+    .string()
+    .min(1, 'DATABASE_PORT is required.')
+    .transform(Number),
   DATABASE_NAME: z.string().min(1, 'DATABASE_NAME is required.'),
   DATABASE_USERNAME: z.string().min(1, 'DATABASE_USERNAME is required.'),
   DATABASE_PASSWORD: z.string().min(1, 'DATABASE_PASSWORD is required.'),
   SERVER_URL: z.string().min(1, 'SERVER_URL is required.'),
-  THROTTLER_LIMITER: z.string().min(1, 'THROTTLER_LIMITER is required.').transform(Number),
-  ITEMS_PER_PAGE: z.string().min(1, 'ITEMS_PER_PAGE is required.').transform(Number),
-  CLOUDINARY_CLOUD_NAME: z.string().min(1, 'CLOUDINARY_CLOUD_NAME is required.'),
+  THROTTLER_LIMITER: z
+    .string()
+    .min(1, 'THROTTLER_LIMITER is required.')
+    .transform(Number),
+  ITEMS_PER_PAGE: z
+    .string()
+    .min(1, 'ITEMS_PER_PAGE is required.')
+    .transform(Number),
+  CLOUDINARY_CLOUD_NAME: z
+    .string()
+    .min(1, 'CLOUDINARY_CLOUD_NAME is required.'),
   CLOUDINARY_API_KEY: z.string().min(1, 'CLOUDINARY_API_KEY is required.'),
-  CLOUDINARY_API_SECRET: z.string().min(1, 'CLOUDINARY_API_SECRET is required.'),
+  CLOUDINARY_API_SECRET: z
+    .string()
+    .min(1, 'CLOUDINARY_API_SECRET is required.'),
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required.'),
   SMTP_USER: z.string().min(1, 'SMTP_USER is required.'),
   SMTP_PASS: z.string().min(1, 'SMTP_PASS is required.'),

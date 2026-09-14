@@ -51,8 +51,8 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     },
     {
       provide: APP_GUARD,
-      useClass: ThrottlerBehindProxyGuard
-    }
+      useClass: ThrottlerBehindProxyGuard,
+    },
   ],
 })
 export class AppModule {}

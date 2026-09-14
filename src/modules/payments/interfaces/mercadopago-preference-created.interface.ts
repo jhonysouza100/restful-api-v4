@@ -59,8 +59,7 @@ export class MercadopagoPreferenceCreatedPayload {
   external_reference?: string;
 
   @ApiProperty({
-    example:
-      'https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=...',
+    example: 'https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=...',
     required: false,
   })
   init_point?: string;

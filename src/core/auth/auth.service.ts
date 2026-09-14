@@ -8,17 +8,23 @@ import { TokenInterface } from './interfaces/token.interface';
 
 @Injectable()
 export class AuthService {
-  constructor (
+  constructor(
     private jwtService: JwtService,
     private readonly tenantService: TenantsService,
   ) {}
 
-  async login(credentials: LoginDto): Promise<{ token: string, payload: TokenInterface }> {
+  async login(
+    credentials: LoginDto,
+  ): Promise<{ token: string; payload: TokenInterface }> {
     const userFound = await this.tenantService.findOneByName(credentials.name);
 
     // brypt compare
-    const checkPassword = await compare(credentials.password, userFound.password);
-    if(!checkPassword) throw new UnauthorizedException('Contraseña incorrecta');
+    const checkPassword = await compare(
+      credentials.password,
+      userFound.password,
+    );
+    if (!checkPassword)
+      throw new UnauthorizedException('Contraseña incorrecta');
 
     const payload: TokenInterface = {
       id: userFound.id,
@@ -26,18 +32,22 @@ export class AuthService {
       email: userFound.email,
       role: userFound.role,
       picture: userFound.picture,
-      company: userFound.company
+      company: userFound.company,
     };
 
     // Genera el token JWT
-    const token = await this.jwtService.signAsync(payload, { secret: jwtConstants.secret });
+    const token = await this.jwtService.signAsync(payload, {
+      secret: jwtConstants.secret,
+    });
 
     return { token, payload };
   }
 
   async verify(token: string): Promise<TokenInterface> {
     try {
-      const payload: TokenInterface = await this.jwtService.verifyAsync(token, { secret: jwtConstants.secret });
+      const payload: TokenInterface = await this.jwtService.verifyAsync(token, {
+        secret: jwtConstants.secret,
+      });
 
       // console.log(payload); // Log the payload for debugging purposes
 

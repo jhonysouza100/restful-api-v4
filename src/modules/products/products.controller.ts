@@ -1,6 +1,30 @@
-import { BadRequestException, Body, Controller, Delete, Get, Injectable, Param, Patch, PipeTransform, Post, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Injectable,
+  Param,
+  Patch,
+  PipeTransform,
+  Post,
+  Query,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiExtraModels,
+  ApiHeader,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
 import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
@@ -39,7 +63,11 @@ export class ProductsController {
 
   @Post()
   @UseRoleAuthToken(Role.ADMIN)
-  @ApiOperation({ summary: 'Crear producto', description: 'Permite a un administrador crear un nuevo producto en el sistema.' })
+  @ApiOperation({
+    summary: 'Crear producto',
+    description:
+      'Permite a un administrador crear un nuevo producto en el sistema.',
+  })
   @ApiConsumes('multipart/form-data')
   /**
    * Si quieres que Swagger muestre la estructura del DTO,
@@ -47,15 +75,19 @@ export class ProductsController {
    * debes usar @ApiExtraModels(CreateProductDto) para que el modelo se incluya en la documentación.
    */
   @ApiExtraModels(CreateProductDto)
-  @ApiBody({ 
+  @ApiBody({
     description: 'Datos necesarios para crear un nuevo producto.',
     schema: {
       type: 'object',
       properties: {
         product: {
-          $ref: getSchemaPath(CreateProductDto)
+          $ref: getSchemaPath(CreateProductDto),
         },
-        image: { type: 'string', format: 'binary', description: 'Imagen principal opcional.' },
+        image: {
+          type: 'string',
+          format: 'binary',
+          description: 'Imagen principal opcional.',
+        },
         gallery: {
           type: 'array',
           description: 'Imágenes adicionales opcionales del producto.',
@@ -65,18 +97,22 @@ export class ProductsController {
       required: ['product'],
     },
   })
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'image', maxCount: 1 },
-    { name: 'gallery', maxCount: 20 },
-  ]))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'image', maxCount: 1 },
+      { name: 'gallery', maxCount: 20 },
+    ]),
+  )
   create(
     @Body('product', ParseJSONPipe) createProductDto: CreateProductDto,
-    @UploadedFiles() files: {
-      image?: Express.Multer.File,
-      gallery?: Express.Multer.File[],
-    }) {
+    @UploadedFiles()
+    files: {
+      image?: Express.Multer.File;
+      gallery?: Express.Multer.File[];
+    },
+  ) {
     try {
-      return this.productsService.create(createProductDto, files)
+      return this.productsService.create(createProductDto, files);
     } catch (error: any) {
       return error.message;
     }
@@ -84,7 +120,11 @@ export class ProductsController {
 
   @Post('duplicate')
   @UseRoleAuthToken()
-  @ApiOperation({ summary: 'Duplicar productos', description: 'Duplica los productos indicados por sus IDs dentro del Array de IDs.' })
+  @ApiOperation({
+    summary: 'Duplicar productos',
+    description:
+      'Duplica los productos indicados por sus IDs dentro del Array de IDs.',
+  })
   duplicate(@Body() duplicateProductsDto: DuplicateProductsDto) {
     try {
       return this.productsService.duplicate(duplicateProductsDto.ids);
@@ -95,7 +135,11 @@ export class ProductsController {
 
   @Patch('desactive')
   @UseRoleAuthToken()
-  @ApiOperation({ summary: 'Activar/Desactivar productos', description: 'Cambia el estado de los productos indicados dentro del Array de IDs.' })
+  @ApiOperation({
+    summary: 'Activar/Desactivar productos',
+    description:
+      'Cambia el estado de los productos indicados dentro del Array de IDs.',
+  })
   desactive(@Body() desactiveProductsDto: DuplicateProductsDto) {
     try {
       return this.productsService.desactive(desactiveProductsDto.ids);
@@ -103,10 +147,19 @@ export class ProductsController {
       return error.message;
     }
   }
-  
+
   @Get()
-  @ApiOperation({ summary: 'Obtener productos', description: 'Permite obtener una lista de productos con filtros opcionales.' })
-  @ApiQuery({ name: 'q', description: 'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.', example: '?q=hello' })
+  @ApiOperation({
+    summary: 'Obtener productos',
+    description:
+      'Permite obtener una lista de productos con filtros opcionales.',
+  })
+  @ApiQuery({
+    name: 'q',
+    description:
+      'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.',
+    example: '?q=hello',
+  })
   findAll(@Query() query?: Record<string, string>) {
     try {
       return this.productsService.findAll(query);
@@ -117,9 +170,20 @@ export class ProductsController {
 
   @Get(':slug')
   @UseTenantGuard()
-  @ApiHeader({ name: 'x-api-key', description: 'API Key (optional if using domain)', required: false })
-  @ApiOperation({ summary: 'Obtener producto por slug', description: 'Permite obtener un producto específico por su slug.' })
-  @ApiParam({ name: 'slug', description: 'Slug del producto a buscar.', example: 'laptop' })
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'API Key (optional if using domain)',
+    required: false,
+  })
+  @ApiOperation({
+    summary: 'Obtener producto por slug',
+    description: 'Permite obtener un producto específico por su slug.',
+  })
+  @ApiParam({
+    name: 'slug',
+    description: 'Slug del producto a buscar.',
+    example: 'laptop',
+  })
   findBySlug(@Param('slug') slug: string) {
     try {
       return this.productsService.findBySlug(slug);
@@ -130,8 +194,16 @@ export class ProductsController {
 
   @Get('/slug/sitemap')
   @UseTenantGuard()
-  @ApiHeader({ name: 'x-api-key', description: 'API Key (optional if using domain)', required: false })
-  @ApiOperation({ summary: 'Obtener todos los slugs de productos', description: 'Obtiene todos los productos disponibles por sus slugs para generar el mapa del sitio.' })
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'API Key (optional if using domain)',
+    required: false,
+  })
+  @ApiOperation({
+    summary: 'Obtener todos los slugs de productos',
+    description:
+      'Obtiene todos los productos disponibles por sus slugs para generar el mapa del sitio.',
+  })
   getSitemapBySlug() {
     try {
       return this.productsService.getSitemapBySlug();
@@ -142,8 +214,15 @@ export class ProductsController {
 
   @Patch(':id')
   @UseRoleAuthToken(Role.ADMIN)
-  @ApiOperation({ summary: 'Actualizar producto', description: 'Actualiza la información del producto identificado por su ID.' })
-  @ApiParam({ name: 'id', description: 'Identificador único del producto a actualizar.' })
+  @ApiOperation({
+    summary: 'Actualizar producto',
+    description:
+      'Actualiza la información del producto identificado por su ID.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Identificador único del producto a actualizar.',
+  })
   @ApiConsumes('multipart/form-data')
   /**
    * Si quieres que Swagger muestre la estructura del DTO,
@@ -151,15 +230,19 @@ export class ProductsController {
    * debes usar @ApiExtraModels(UpdateProductDto) para que el modelo se incluya en la documentación.
    */
   @ApiExtraModels(UpdateProductDto)
-  @ApiBody({ 
+  @ApiBody({
     description: 'Datos requeridos para actualizar un producto.',
     schema: {
       type: 'object',
       properties: {
         product: {
-          $ref: getSchemaPath(UpdateProductDto)
+          $ref: getSchemaPath(UpdateProductDto),
         },
-        image: { type: 'string', format: 'binary', description: 'Nueva imagen principal opcional.' },
+        image: {
+          type: 'string',
+          format: 'binary',
+          description: 'Nueva imagen principal opcional.',
+        },
         gallery: {
           type: 'array',
           description: 'Imágenes adicionales nuevas opcionales del producto.',
@@ -169,14 +252,17 @@ export class ProductsController {
       required: ['product'],
     },
   })
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'image', maxCount: 1 },
-    { name: 'gallery', maxCount: 20 },
-  ]))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'image', maxCount: 1 },
+      { name: 'gallery', maxCount: 20 },
+    ]),
+  )
   update(
     @Param('id') id: string,
     @Body('product', ParseJSONPipe) product: UpdateProductDto,
-    @UploadedFiles() files: {
+    @UploadedFiles()
+    files: {
       image?: Express.Multer.File;
       gallery?: Express.Multer.File[];
     },
@@ -190,8 +276,14 @@ export class ProductsController {
 
   @Delete(':id')
   @UseRoleAuthToken(Role.ADMIN)
-  @ApiOperation({ summary: 'Eliminar productos', description: 'Elimina productos del sistema.' })
-  @ApiParam({ name: 'id', description: 'Identificador único de los productos a eliminar. [1,2,3]' })
+  @ApiOperation({
+    summary: 'Eliminar productos',
+    description: 'Elimina productos del sistema.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Identificador único de los productos a eliminar. [1,2,3]',
+  })
   remove(@Param('id') id: string) {
     try {
       return this.productsService.remove(id);

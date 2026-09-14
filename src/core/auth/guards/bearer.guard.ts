@@ -1,5 +1,12 @@
 // Obtiene el usuario de la token de Header: "Authorization: Bearer"
-import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { jwtConstants } from '../../../common/constants';
@@ -10,7 +17,7 @@ import { TokenInterface } from '../interfaces/token.interface';
 export class BearerGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly adminContext: AdminContext
+    private readonly adminContext: AdminContext,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -21,7 +28,9 @@ export class BearerGuard implements CanActivate {
     if (!token) throw new UnauthorizedException('Debes iniciar sesión');
 
     try {
-      const payload: TokenInterface = await this.jwtService.verifyAsync(token, {secret: jwtConstants.secret});
+      const payload: TokenInterface = await this.jwtService.verifyAsync(token, {
+        secret: jwtConstants.secret,
+      });
 
       // console.log("Payload verificado:", payload); // Log the payload for debugging purposes
 
@@ -41,5 +50,4 @@ export class BearerGuard implements CanActivate {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }
-  
 }

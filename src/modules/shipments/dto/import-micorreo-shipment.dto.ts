@@ -8,7 +8,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  ValidateNested
+  ValidateNested,
 } from 'class-validator';
 import { DeliveryTypeEnum } from '../enum/delivery-type.enum';
 
@@ -75,7 +75,8 @@ export class MiCorreoAddressDto {
 export class MiCorreoSenderDto {
   @ApiProperty({
     example: 'Juan Pérez',
-    description: 'Nombre del remitente. Si no se manda un nombre de remitente, se va insertar el nombre del Tenant',
+    description:
+      'Nombre del remitente. Si no se manda un nombre de remitente, se va insertar el nombre del Tenant',
   })
   @IsString()
   @IsOptional()
@@ -161,7 +162,8 @@ export class MiCorreoShippingDto {
 
   @ApiPropertyOptional({
     example: '123',
-    description: 'Código de sucursal. Obligatorio únicamente cuando deliveryType = "S".',
+    description:
+      'Código de sucursal. Obligatorio únicamente cuando deliveryType = "S".',
   })
   @IsOptional()
   @IsString()
@@ -215,7 +217,7 @@ export class MiCorreoShippingDto {
 export class ImportMiCorreoShipmentDto {
   @ApiProperty({
     description: 'Nro. de cuenta en Correo Argentino.',
-    example: '00078945'
+    example: '00078945',
   })
   @IsOptional()
   @IsString()

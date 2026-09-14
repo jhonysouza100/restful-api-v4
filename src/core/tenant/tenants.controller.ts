@@ -1,4 +1,11 @@
-import { Body, Controller, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../auth/decorators/auth.decorator';
@@ -13,8 +20,14 @@ export class TenantsController {
 
   @Post()
   @UseRoleAuthToken(Role.ROOT)
-  @ApiOperation({ summary: 'Crear tenant', description: 'Crea un nuevo tenant con la información proporcionada.' })
-  @ApiBody({ type: CreateTenantDto, description: 'Datos necesarios para crear un tenant.' })
+  @ApiOperation({
+    summary: 'Crear tenant',
+    description: 'Crea un nuevo tenant con la información proporcionada.',
+  })
+  @ApiBody({
+    type: CreateTenantDto,
+    description: 'Datos necesarios para crear un tenant.',
+  })
   async create(@Body() createTenantDto: CreateTenantDto) {
     try {
       return this.tenantsService.create(createTenantDto);
@@ -25,12 +38,23 @@ export class TenantsController {
 
   @Patch(':id')
   @UseRoleAuthToken(Role.ROOT)
-  @ApiOperation({ summary: 'Actualizar tenant', description: 'Actualiza los datos de un tenant existente por su id.' })
-  @ApiParam({ name: 'id', type: Number, description: 'Identificador numérico del tenant.', example: 1 })
-  @ApiBody({ type: UpdateTenantDto, description: 'Datos que se pueden modificar del tenant.' })
+  @ApiOperation({
+    summary: 'Actualizar tenant',
+    description: 'Actualiza los datos de un tenant existente por su id.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'Identificador numérico del tenant.',
+    example: 1,
+  })
+  @ApiBody({
+    type: UpdateTenantDto,
+    description: 'Datos que se pueden modificar del tenant.',
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateTenantDto: UpdateTenantDto
+    @Body() updateTenantDto: UpdateTenantDto,
   ) {
     try {
       return this.tenantsService.update(id, updateTenantDto);

@@ -6,7 +6,7 @@ export enum MercadoPagoPaymentStatusEnum {
 export enum MercadoPagoPaymentStatusDetailEnum {
   ACCREDITED = 'accredited',
   PENDING = 'pending',
-  CANCELLED = 'cancelled'
+  CANCELLED = 'cancelled',
 }
 
 export interface MercadoPagoPayment {

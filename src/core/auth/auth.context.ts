@@ -1,19 +1,17 @@
-import { Injectable, Scope } from "@nestjs/common";
+import { Injectable, Scope } from '@nestjs/common';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AdminContext {
   private authData: {
-    id: number,
-    company: string
-  }
+    id: number;
+    company: string;
+  };
 
-  setAuthData(data: {
-    id: number, company: string
-  }): void {
+  setAuthData(data: { id: number; company: string }): void {
     this.authData = {
       id: data.id,
-      company: data.company
-    }
+      company: data.company,
+    };
   }
 
   getAuthId(): number {
@@ -21,6 +19,6 @@ export class AdminContext {
   }
 
   getAuthCompany(): string {
-    return this.authData.company
+    return this.authData.company;
   }
 }

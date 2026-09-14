@@ -31,7 +31,8 @@ export class RegisterDto {
   picture?: string;
 
   @ApiProperty({
-    description: 'Identificador único del usuario en el proveedor de autenticación (sub)',
+    description:
+      'Identificador único del usuario en el proveedor de autenticación (sub)',
     type: String,
     example: 'auth0|1234567890abcdef',
     required: false,

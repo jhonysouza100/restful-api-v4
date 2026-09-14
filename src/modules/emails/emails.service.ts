@@ -7,22 +7,25 @@ import { SendEmailDto } from './dtos/send-mail.dto';
 export class EmailsService {
   constructor(private readonly tenantContext: TenantContext) {}
 
-  private getTenantSMTP(): { user: string, pass: string } {
+  private getTenantSMTP(): { user: string; pass: string } {
     return this.tenantContext.getTenantSMTP();
   }
 
-  async sendMail(data: SendEmailDto, files: Express.Multer.File[] = [], credentials?: {
-      user: string,
-      pass: string
-    }) {
-
+  async sendMail(
+    data: SendEmailDto,
+    files: Express.Multer.File[] = [],
+    credentials?: {
+      user: string;
+      pass: string;
+    },
+  ) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       secure: true,
       auth: {
         user: credentials?.user || this.getTenantSMTP().user,
-        pass: credentials?.pass || this.getTenantSMTP().pass
-      }
+        pass: credentials?.pass || this.getTenantSMTP().pass,
+      },
     });
 
     const attachments = [
@@ -34,7 +37,7 @@ export class EmailsService {
         filename: file.originalname,
         content: file.buffer,
         contentType: file.mimetype,
-      }))
+      })),
     ];
 
     try {
@@ -43,7 +46,7 @@ export class EmailsService {
         to: data.to,
         attachments,
         subject: data.subject,
-        html: data.htmlContent
+        html: data.htmlContent,
       });
       return response.envelope;
     } catch (error: any) {

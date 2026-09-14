@@ -1,10 +1,33 @@
-import { BadRequestException, Body, Controller, HttpCode, HttpStatus, PipeTransform, Post, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  PipeTransform,
+  Post,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiOperation, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiCreatedResponse,
+  ApiExtraModels,
+  ApiHeader,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { SendEmailDto } from './dtos/send-mail.dto';
 import { EmailsService } from './emails.service';
-import { EmailCreatedResponse, EmailErrorResponse } from './interfaces/emails-response.interface';
+import {
+  EmailCreatedResponse,
+  EmailErrorResponse,
+} from './interfaces/emails-response.interface';
 
 class ParseJSONPipe implements PipeTransform {
   transform(value: unknown) {
@@ -40,15 +63,20 @@ export class EmailsController {
   constructor(private readonly emailsService: EmailsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Enviar correo electrónico', description: 'Envía correos usando multipart/form-data. El campo `email` debe contener un JSON y el campo `files` acepta hasta 10 archivos adjuntos en formato PDF o imagen.' })
+  @ApiOperation({
+    summary: 'Enviar correo electrónico',
+    description:
+      'Envía correos usando multipart/form-data. El campo `email` debe contener un JSON y el campo `files` acepta hasta 10 archivos adjuntos en formato PDF o imagen.',
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({
     description: 'Email sent successfully',
-    type: EmailCreatedResponse
+    type: EmailCreatedResponse,
   })
   @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Tenant identification required. Provide x-api-key header or use domain in URL',
-    type: EmailErrorResponse
+    description:
+      'Unauthorized. Tenant identification required. Provide x-api-key header or use domain in URL',
+    type: EmailErrorResponse,
   })
   @ApiConsumes('multipart/form-data')
   /**
@@ -58,16 +86,18 @@ export class EmailsController {
    */
   @ApiExtraModels(SendEmailDto)
   @ApiBody({
-    description: 'Email payload en el form-data: email como string JSON y archivos PDF/imagen opcionales en el campo files.',
+    description:
+      'Email payload en el form-data: email como string JSON y archivos PDF/imagen opcionales en el campo files.',
     schema: {
       type: 'object',
       properties: {
         email: {
-          $ref: getSchemaPath(SendEmailDto)
+          $ref: getSchemaPath(SendEmailDto),
         },
         files: {
           type: 'array',
-          description: 'Archivos PDF o de imagen opcionales para adjuntar al correo electrónico.',
+          description:
+            'Archivos PDF o de imagen opcionales para adjuntar al correo electrónico.',
           items: {
             type: 'string',
             format: 'binary',
@@ -85,19 +115,31 @@ export class EmailsController {
    * Se utiliza un pipe ParseJSONPipe para convertir el string JSON en un objeto JavaScript.
    * El pipe ParseJSONPipe valida que el string sea un JSON válido y lanza una excepción si no lo es.
    */
-  @UseInterceptors(FilesInterceptor('files', 10, {
-    fileFilter: (_req, file, callback) => {
-      const allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      fileFilter: (_req, file, callback) => {
+        const allowedMimeTypes = [
+          'application/pdf',
+          'image/jpeg',
+          'image/jpg',
+          'image/png',
+          'image/gif',
+          'image/webp',
+        ];
 
-      if (allowedMimeTypes.includes(file.mimetype)) {
-        callback(null, true);
-        return;
-      }
+        if (allowedMimeTypes.includes(file.mimetype)) {
+          callback(null, true);
+          return;
+        }
 
-      callback(new Error('Only PDF and image files are allowed'), false);
-    },
-  }))
-  async sendMail(@Body('email', ParseJSONPipe) data: SendEmailDto, @UploadedFiles() files: Express.Multer.File[] = []) {
+        callback(new Error('Only PDF and image files are allowed'), false);
+      },
+    }),
+  )
+  async sendMail(
+    @Body('email', ParseJSONPipe) data: SendEmailDto,
+    @UploadedFiles() files: Express.Multer.File[] = [],
+  ) {
     try {
       return await this.emailsService.sendMail(data, files);
     } catch (error: any) {

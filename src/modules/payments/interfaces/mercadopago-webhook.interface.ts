@@ -2,10 +2,19 @@ import { ApiProperty } from '@nestjs/swagger';
 import { MercadopagoWebhookAction } from '../enum/mercadopago-webhook-action.enum';
 
 export class MercadopagoWebhookPayload {
-  @ApiProperty({ example: MercadopagoWebhookAction.PAYMENT_CREATED, enum: MercadopagoWebhookAction, description: "Evento notificado (ej: 'payment.created')", required: false })
+  @ApiProperty({
+    example: MercadopagoWebhookAction.PAYMENT_CREATED,
+    enum: MercadopagoWebhookAction,
+    description: "Evento notificado (ej: 'payment.created')",
+    required: false,
+  })
   action?: MercadopagoWebhookAction; // e.g. 'payment.created'
 
-  @ApiProperty({ example: 'v1', description: 'Versión de la API que envía la notificación', required: false })
+  @ApiProperty({
+    example: 'v1',
+    description: 'Versión de la API que envía la notificación',
+    required: false,
+  })
   api_version?: string; // e.g. 'v1'
 
   @ApiProperty({
@@ -15,27 +24,55 @@ export class MercadopagoWebhookPayload {
   })
   data?: { id: string }; // order id
 
-  @ApiProperty({ example: '2026-04-05T08:22:08Z', description: 'Fecha de creación (ISO)', required: false })
+  @ApiProperty({
+    example: '2026-04-05T08:22:08Z',
+    description: 'Fecha de creación (ISO)',
+    required: false,
+  })
   date_created?: string; // ISO date string
 
-  @ApiProperty({ example: 130425051313, description: 'ID de la notificación', required: false })
+  @ApiProperty({
+    example: 130425051313,
+    description: 'ID de la notificación',
+    required: false,
+  })
   id?: number; // notification id
 
-  @ApiProperty({ example: true, description: 'Indica si es modo live', required: false })
+  @ApiProperty({
+    example: true,
+    description: 'Indica si es modo live',
+    required: false,
+  })
   live_mode?: boolean;
 
-  @ApiProperty({ example: 'payment', description: 'Tipo de tópico', required: false })
+  @ApiProperty({
+    example: 'payment',
+    description: 'Tipo de tópico',
+    required: false,
+  })
   type?: 'payment' | 'plan' | 'subscription' | 'invoice' | string;
 
-  @ApiProperty({ example: '251743149', description: 'Identificador del usuario/vendedor', required: false })
+  @ApiProperty({
+    example: '251743149',
+    description: 'Identificador del usuario/vendedor',
+    required: false,
+  })
   user_id?: string;
 
   // In some cases (errors / other topics) the payload can include other
   // fields like resource/topic used in comments.
-  @ApiProperty({ example: 'https://api.mercadolibre.com/merchant_orders/{id}', description: 'Url para recuperar la preferencia', required: false })
+  @ApiProperty({
+    example: 'https://api.mercadolibre.com/merchant_orders/{id}',
+    description: 'Url para recuperar la preferencia',
+    required: false,
+  })
   resource?: string;
 
-  @ApiProperty({ example: 'merchant_order', description: 'Tópico (opcional)', required: false })
+  @ApiProperty({
+    example: 'merchant_order',
+    description: 'Tópico (opcional)',
+    required: false,
+  })
   topic?: string;
 
   [key: string]: any;

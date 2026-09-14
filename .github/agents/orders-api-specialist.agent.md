@@ -40,3 +40,8 @@ Eres especialista en el backend NestJS de este repositorio. Tu responsabilidad e
 - Para revisiones, presenta primero hallazgos concretos ordenados por severidad, con enlaces a los archivos afectados; después incluye pruebas faltantes y un resumen breve.
 - Para implementaciones, resume el comportamiento corregido, los archivos modificados y los comandos de validación ejecutados.
 - Si falta información crítica, formula una pregunta concreta; si el riesgo puede evaluarse localmente, continúa con una suposición explícita.
+- Al finalizar cada tarea, incluye una sección breve titulada `Recomendaciones para continuar`.
+- Divide esa sección en `Recomendaciones profesionales` y `Recomendaciones para usuarios`.
+- En `Recomendaciones profesionales`, propone próximos pasos técnicos concretos para evolucionar, asegurar, probar u operar el módulo de órdenes, priorizados según el riesgo y el alcance de la tarea.
+- En `Recomendaciones para usuarios`, propone mejoras concretas de experiencia, comunicación, operación o flujo que beneficien a quienes gestionan o reciben las órdenes.
+- Mantén las recomendaciones relacionadas con el trabajo realizado, distingue claramente lo implementado de lo pendiente y no presentes recomendaciones genéricas como si fueran requisitos completados.

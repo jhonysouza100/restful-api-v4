@@ -1,16 +1,21 @@
 // Obtiene el usuario de la token de Header: "Cookies: auth-token"
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { jwtConstants } from "../../../common/constants";
-import { AdminContext } from "../auth.context";
+import { jwtConstants } from '../../../common/constants';
+import { AdminContext } from '../auth.context';
 import { TokenInterface } from '../interfaces/token.interface';
 
 @Injectable()
 export class CookiesGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly adminContext: AdminContext
+    private readonly adminContext: AdminContext,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -18,17 +23,20 @@ export class CookiesGuard implements CanActivate {
 
     const cookie = request.cookies?.['auth-token'];
 
-    if(!cookie) throw new UnauthorizedException('No se encontraron cookies de session');
+    if (!cookie)
+      throw new UnauthorizedException('No se encontraron cookies de session');
 
     try {
-      const payload: TokenInterface = await this.jwtService.verifyAsync(cookie, {secret: jwtConstants.secret});
+      const payload: TokenInterface = await this.jwtService.verifyAsync(
+        cookie,
+        { secret: jwtConstants.secret },
+      );
 
       // console.log(payload); // Log the payload for debugging purposes
 
       // (Antes) Guarda las credenciales del auth en un contexto
       // Otros servicios pueden acceder al tenant actual inyectando AdminContext
       this.adminContext.setAuthData(payload);
-
 
       request['admin'] = payload;
     } catch {

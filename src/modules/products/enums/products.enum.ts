@@ -19,5 +19,5 @@ export enum ProductCategoryEnum {
   BABY = 'BABY', // Bebés
   BEAUTY = 'BEAUTY', // Perfumería & Cosméticos
   HEALTH = 'HEALTH', // Salud y Bienestar
-  PETS = 'PETS' // Mascotas y Animales
+  PETS = 'PETS', // Mascotas y Animales
 }

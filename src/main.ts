@@ -29,26 +29,28 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
   });
-  
+
   // Indica qué motor de parseo usar para interpretar los parámetros de las URLs (query params).
   app.set('query parser', 'extended');
 
   // Para usar dto con class-transformer y class-validator
   // Eso hace que NestJS rechace cualquier propiedad que no tenga una regla de validación válida.
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   const config = new DocumentBuilder()
-  .setTitle("ChillHop Studio API")
-  .setDescription("")
-  .setVersion("1.0")
-  .addBearerAuth()
-  .build();
+    .setTitle('ChillHop Studio API')
+    .setDescription('')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup("docs", app, document);
+  SwaggerModule.setup('docs', app, document);
 
   await app.listen(env.PORT);
 }

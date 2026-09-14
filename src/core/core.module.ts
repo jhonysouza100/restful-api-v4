@@ -16,12 +16,25 @@ import { TenantsService } from './tenant/tenants.service';
   imports: [
     JwtModule.register({
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '1d' }
+      signOptions: { expiresIn: '1d' },
     }),
     TypeOrmModule.forFeature([TenantEntity]),
   ],
   controllers: [TenantsController, AuthController],
-  providers: [TenantContext, TenantsService, TenantInterceptor, AuthService, AdminContext, JwtService],
-  exports: [TenantContext, TenantsService, TenantInterceptor, AdminContext, JwtService]
+  providers: [
+    TenantContext,
+    TenantsService,
+    TenantInterceptor,
+    AuthService,
+    AdminContext,
+    JwtService,
+  ],
+  exports: [
+    TenantContext,
+    TenantsService,
+    TenantInterceptor,
+    AdminContext,
+    JwtService,
+  ],
 })
 export class CoreModule {}

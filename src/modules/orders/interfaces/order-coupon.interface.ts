@@ -1,4 +1,4 @@
 export interface OrderCouponInterface {
-  code: string
-  discount: number
+  code: string;
+  discount: number;
 }

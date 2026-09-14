@@ -1,4 +1,4 @@
-import { Role } from "../../../common/enums/roles.enum";
+import { Role } from '../../../common/enums/roles.enum';
 
 export interface TokenInterface {
   id: number;

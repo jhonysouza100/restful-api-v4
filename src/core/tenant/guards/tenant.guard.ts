@@ -1,15 +1,20 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { TenantEntity } from '../entities/tenant.entity';
 import { TenantContext } from '../tenant.context';
 import { TenantsService } from '../tenants.service';
 
 /**
  * TenantGuard
- * 
+ *
  * Guard que valida y establece el contexto del tenant para cada request.
  * TODOS los endpoints que usen @UseGuards(TenantGuard) estarán protegidos
  * y tendrán acceso al tenant actual mediante TenantContext.
- * 
+ *
  * Métodos de identificación (en orden):
  * 1. Header x-api-key -> busca por API Key
  * 2. Header Origin -> busca por dominio
@@ -23,7 +28,7 @@ export class TenantGuard implements CanActivate {
 
   /**
    * Valida que el request tenga un tenant válido
-   * 
+   *
    * @param context - Contexto de ejecución
    * @returns true si el tenant es válido
    * @throws UnauthorizedException si el tenant no se encuentra
@@ -33,7 +38,9 @@ export class TenantGuard implements CanActivate {
     const tenant = await this.extractTenantData(request);
 
     if (!tenant) {
-      throw new UnauthorizedException('Tenant identification required. Provide x-api-key header or use domain in URL');
+      throw new UnauthorizedException(
+        'Tenant identification required. Provide x-api-key header or use domain in URL',
+      );
     }
 
     // Guarda las credenciales del tenant en el servicio de contexto
@@ -49,7 +56,7 @@ export class TenantGuard implements CanActivate {
   /**
    * Extrae los datos del tenant del request
    * Intenta identificar por API Key primero, luego por dominio
-   * 
+   *
    * @param request - Request HTTP
    * @returns TenantEntity si se encuentra, null en caso contrario
    */

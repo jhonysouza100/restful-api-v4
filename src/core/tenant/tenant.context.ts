@@ -1,15 +1,18 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { CorreoArgentinoDto, CreatePrivateKeysDto } from './dtos/update-tenant.dto';
+import {
+  CorreoArgentinoDto,
+  CreatePrivateKeysDto,
+} from './dtos/update-tenant.dto';
 
 /**
  * TenantContext
- * 
+ *
  * Servicio de contexto multi-tenant con SCOPE REQUEST.
- * 
+ *
  * IMPORTANTE: Se crea UNA INSTANCIA por cada HTTP request.
  * Esto asegura que cada request tenga datos del tenant aislados
  * sin riesgo de contaminación entre requests concurrentes.
- * 
+ *
  * Uso:
  * - El TenantGuard establece el contexto: setTenantData()
  * - Otros servicios acceden inyectando este servicio
@@ -22,35 +25,35 @@ export class TenantContext {
    * Se limpia automáticamente al finalizar el request
    */
   private tenantData: {
-    id: number,
-    email: string,
-    domain: string,
-    company: string,
-    fullName: string,
-    private_keys: CreatePrivateKeysDto
+    id: number;
+    email: string;
+    domain: string;
+    company: string;
+    fullName: string;
+    private_keys: CreatePrivateKeysDto;
   };
 
   /**
    * Establece las credenciales del tenant actual
    * Llamado por TenantGuard después de validar el tenant
-   * 
+   *
    * @param data - Datos del tenant (id, email, domain, etc.)
    */
-  setTenantData(data: { 
-    id: number, 
-    email: string, 
-    domain: string, 
-    company: string,
-    fullName: string
-    private_keys: CreatePrivateKeysDto
-   }): void {
+  setTenantData(data: {
+    id: number;
+    email: string;
+    domain: string;
+    company: string;
+    fullName: string;
+    private_keys: CreatePrivateKeysDto;
+  }): void {
     this.tenantData = {
       id: data.id,
       email: data.email,
       domain: data.domain,
       company: data.company,
       fullName: data.fullName,
-      private_keys: data.private_keys
+      private_keys: data.private_keys,
     };
   }
 
@@ -90,10 +93,10 @@ export class TenantContext {
    * Obtiene las credenciales de email (SMTP) del tenant actual
    * @returns EmailCredentialsDto {user, pass}
    */
-  getTenantSMTP(): { user: string, pass: string } {
+  getTenantSMTP(): { user: string; pass: string } {
     return {
       user: this.tenantData.email,
-      pass: this.tenantData.private_keys?.smtp || ''
+      pass: this.tenantData.private_keys?.smtp || '',
     };
   }
 

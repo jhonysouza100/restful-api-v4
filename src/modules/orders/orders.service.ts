@@ -1,7 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, FindOptionsWhere, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { env } from '../../common/config/env.config';
+import { AdminContext } from '../../core/auth/auth.context';
 import { TenantContext } from '../../core/tenant/tenant.context';
 import { TenantsService } from '../../core/tenant/tenants.service';
 import { SendEmailDto } from '../emails/dtos/send-mail.dto';
@@ -18,7 +19,14 @@ import { ProductCategoryEnum } from '../products/enums/products.enum';
 import { ProductsService } from '../products/products.service';
 import { ImportMiCorreoShipmentDto } from '../shipments/dto/import-micorreo-shipment.dto';
 import { AgencyIconEnum } from '../shipments/enum/agency-icon.enum';
+import { ShipmentStatusEnum } from '../shipments/enum/delivery-status.enum';
 import { ShipmentsService } from '../shipments/shipments.service';
+import { FindOrdersQueryDto } from './dto/find-orders-query.dto';
+import {
+  UpdateOrderPaymentDto,
+  UpdateOrderShipmentDto,
+  UpdateOrderStatusDto,
+} from './dto/update-order.dto';
 import { OrderStatusEnum } from './enum/order-status.enum';
 import { OrderTopicEnum } from './enum/order-topic.enum';
 import { OrderInterface } from './interfaces/order.interface';
@@ -29,11 +37,167 @@ export class OrdersService {
     @InjectRepository(Order) private readonly ordersRepo: Repository<Order>,
     private readonly productsService: ProductsService,
     private readonly paymentsService: PaymentsService,
+    private readonly adminContext: AdminContext,
     private readonly tenantContext: TenantContext,
     private readonly tenantService: TenantsService,
     private readonly shipmentService: ShipmentsService,
     private readonly emailsService: EmailsService
   ) { }
+
+  async findOrders(query: FindOrdersQueryDto) {
+    /**
+     * Ejemplos:
+     * GET /orders?page=1&limit=12&from=2026-09-01&to=2026-09-14&status=ACREDITADO
+     * GET /orders?page=1&limit=12&min_price=1000
+     * GET /orders?page=1&limit=12&max_price=5000
+     * GET /orders?page=1&limit=12&min_price=1000&max_price=5000
+     */
+    const where: FindOptionsWhere<Order> = {};
+
+    where.tenant_id = this.adminContext.getAuthId();
+
+    if (query.order_id !== undefined) where.id = query.order_id;
+    if (query.status !== undefined) where.status = query.status;
+
+    if (
+      query.min_price !== undefined &&
+      query.max_price !== undefined &&
+      query.min_price > query.max_price
+    ) {
+      throw new HttpException(
+        'El precio mínimo no puede ser mayor que el precio máximo',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (query.min_price !== undefined && query.max_price !== undefined) {
+      where.total = Between(query.min_price, query.max_price);
+    } else if (query.min_price !== undefined) {
+      where.total = MoreThanOrEqual(query.min_price);
+    } else if (query.max_price !== undefined) {
+      where.total = LessThanOrEqual(query.max_price);
+    }
+
+    const from = query.from ? new Date(query.from) : undefined;
+    const to = query.to ? new Date(query.to) : undefined;
+
+    if (from && to) {
+      if (query.to?.length === 10) to.setHours(23, 59, 59, 999);
+      where.createdAt = Between(from, to);
+    } else if (from) {
+      where.createdAt = MoreThanOrEqual(from);
+    } else if (to) {
+      if (query.to?.length === 10) to.setHours(23, 59, 59, 999);
+      where.createdAt = LessThanOrEqual(to);
+    }
+
+    const [data, total] = await this.ordersRepo.findAndCount({
+      where,
+      order: { createdAt: 'DESC' },
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+    });
+
+    const totalPages = Math.ceil(total / query.limit);
+
+    return {
+      data,
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages,
+        hasNextPage: query.page < totalPages,
+        hasPreviousPage: query.page > 1,
+      },
+    };
+  }
+
+  async updateOrderStatus(id: number, data: UpdateOrderStatusDto) {
+    return this.updateOrderInTransaction(id, 'status', data.status, (order) => {
+      order.status = data.status;
+    }, true);
+  }
+
+  async updateOrderShipment(id: number, data: UpdateOrderShipmentDto) {
+    return this.updateOrderInTransaction(id, 'shipment', data, (order) => {
+      order.shipment = {
+        ...order.shipment,
+        ...data,
+      } as Order['shipment'];
+    }, false);
+  }
+
+  async updateOrderPayment(id: number, data: UpdateOrderPaymentDto) {
+    return this.updateOrderInTransaction(id, 'payment', data, (order) => {
+      order.payment = {
+        ...order.payment,
+        ...data,
+      } as Order['payment'];
+    }, false);
+  }
+
+  private async updateOrderInTransaction<T>(
+    id: number,
+    action: string,
+    value: T | undefined,
+    apply: (order: Order) => void,
+    notifyStatus: boolean,
+  ) {
+    if (value === undefined) {
+      throw new HttpException('No hay datos para actualizar', HttpStatus.BAD_REQUEST);
+    }
+
+    const tenantId = this.adminContext.getAuthId();
+    let updatedOrder: Order;
+    let previousStatus: OrderStatusEnum = OrderStatusEnum.PENDING;
+
+    updatedOrder = await this.ordersRepo.manager.transaction(async (manager) => {
+      const orderRepository = manager.getRepository(Order);
+      const order = await orderRepository.findOne({ where: { id, tenant_id: tenantId } });
+
+      if (!order) {
+        throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
+      }
+
+      previousStatus = order.status;
+      apply(order);
+      return orderRepository.save(order);
+    });
+
+    if (notifyStatus || action === 'shipment') {
+      await this.notifyOrderCustomer(updatedOrder, action, previousStatus);
+    }
+
+    return updatedOrder;
+  }
+
+  private async notifyOrderCustomer(
+    order: Order,
+    action: string,
+    previousStatus: OrderStatusEnum,
+  ) {
+    const email = order.shipment?.email;
+    if (!email) return;
+
+    const tenant = await this.tenantService.findById(order.tenant_id);
+    const subject = action === 'status'
+      ? `Actualización del estado de tu compra #${order.id}`
+      : `Actualización de envío de tu compra #${order.id}`;
+    const statusText = action === 'status'
+      ? `<p>Estado anterior: <strong>${previousStatus}</strong></p><p>Nuevo estado: <strong>${order.status}</strong></p>`
+      : `<p>La información de envío de tu orden fue actualizada.</p>`;
+
+    await this.emailsService.sendMail({
+      from: tenant.company,
+      to: [email],
+      subject,
+      htmlContent: `<p>Hola ${order.shipment?.fullName || ''},</p>${statusText}<p>Compra #${order.id}</p>`,
+    }, [], {
+      user: tenant.email,
+      pass: tenant.private_keys?.smtp || '',
+    });
+  }
 
   async createOrder(data: CreateOrderDto) {
     // Validar que data existe y tiene la estructura correcta
@@ -155,7 +319,8 @@ export class OrdersService {
     const shipmentdata = {
       ...data.shipment,
       dimensions: dimensionsData,
-      shipment_cost: shipmentCost
+      shipment_cost: shipmentCost,
+      deliveryStatus: ShipmentStatusEnum.PENDING,
     }
 
     await this.ordersRepo.update(
@@ -305,7 +470,7 @@ export class OrdersService {
     throw new HttpException('Notificación recibida correctamente', HttpStatus.OK);
   }
 
-  // Funci{on auxiliar para calcular el total de un carrito
+  // Funcion auxiliar para calcular el total de un carrito
   private calculateItemsTotal(items: OrderItemInterface[]): number {
     return items.reduce((acc, el) => acc + (el.subtotal * el.quantity), 0);
   }
@@ -391,7 +556,7 @@ export class OrdersService {
     return { rate: shipmentRate?.price ?? 0, dimensions: shipmentDimensions };
   }
 
-  // función auxiliar para notificar por email cuando se concreta una orden
+  // Función auxiliar para notificar (Vendedor) por email cuando se concreta una orden
   private async notifyOrderByEmail(data: {
     from: string,
     to: string,
@@ -494,6 +659,7 @@ export class OrdersService {
     });
   }
 
+  // Función auxiliar para notificar (Comprador) por email cuando se concreta una orden
   private async notificationCustomerByEmail(data: {
     user: { pass: string, email: string },
     from: string,

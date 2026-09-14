@@ -1,18 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 class BackUrls {
-  @ApiProperty({ example: 'https://example.com/success', description: 'URL de éxito' })
+  @ApiProperty({
+    example: 'https://example.com/success',
+    description: 'URL de éxito',
+  })
   success?: string;
 
-  @ApiProperty({ example: 'https://example.com/failure', description: 'URL de fallo' })
+  @ApiProperty({
+    example: 'https://example.com/failure',
+    description: 'URL de fallo',
+  })
   failure?: string;
 
-  @ApiProperty({ example: 'https://example.com/pending', description: 'URL de pendiente' })
+  @ApiProperty({
+    example: 'https://example.com/pending',
+    description: 'URL de pendiente',
+  })
   pending?: string;
 }
 
 class CategoryDescriptor {
-  @ApiProperty({ example: '2025-07-09T00:00:00Z', description: 'Fecha del evento' })
+  @ApiProperty({
+    example: '2025-07-09T00:00:00Z',
+    description: 'Fecha del evento',
+  })
   event_date?: Date;
 
   @ApiProperty({ description: 'Información del pasajero' })
@@ -40,10 +52,16 @@ class Route {
   @ApiProperty({ example: 'City B', description: 'Lugar de destino' })
   destination?: string;
 
-  @ApiProperty({ example: '2025-07-09T08:00:00Z', description: 'Fecha y hora de partida' })
+  @ApiProperty({
+    example: '2025-07-09T08:00:00Z',
+    description: 'Fecha y hora de partida',
+  })
   departure_date_time?: string;
 
-  @ApiProperty({ example: '2025-07-09T12:00:00Z', description: 'Fecha y hora de llegada' })
+  @ApiProperty({
+    example: '2025-07-09T12:00:00Z',
+    description: 'Fecha y hora de llegada',
+  })
   arrival_date_time?: string;
 
   @ApiProperty({ example: 'Company X', description: 'Compañía de transporte' })
@@ -71,7 +89,10 @@ class Item {
   @ApiProperty({ example: 100.0, description: 'Precio unitario del producto' })
   unit_price!: number;
 
-  @ApiProperty({ example: 'Descripción del producto', description: 'Descripción del producto' })
+  @ApiProperty({
+    example: 'Descripción del producto',
+    description: 'Descripción del producto',
+  })
   description?: string;
 
   @ApiProperty({ example: 'Electrónica', description: 'ID de la categoría' })
@@ -79,13 +100,19 @@ class Item {
 
   @ApiProperty({ description: 'Descriptor de la categoría' })
   category_descriptor?: CategoryDescriptor;
-  
-  @ApiProperty({ example: 'https://example.com/product.jpg', description: 'URL de la imagen del producto' })
+
+  @ApiProperty({
+    example: 'https://example.com/product.jpg',
+    description: 'URL de la imagen del producto',
+  })
   picture_url?: string;
 }
 
 class Payer {
-  @ApiProperty({ example: 'user@example.com', description: 'Correo electrónico del pagador' })
+  @ApiProperty({
+    example: 'user@example.com',
+    description: 'Correo electrónico del pagador',
+  })
   email?: string;
 
   @ApiProperty({ example: 'John', description: 'Nombre del pagador' })
@@ -94,7 +121,10 @@ class Payer {
   @ApiProperty({ example: 'Doe', description: 'Apellido del pagador' })
   surname?: string;
 
-  @ApiProperty({ example: '2025-07-09T00:00:00Z', description: 'Fecha de registro' })
+  @ApiProperty({
+    example: '2025-07-09T00:00:00Z',
+    description: 'Fecha de registro',
+  })
   registration_date?: string;
 
   @ApiProperty({ example: 'password', description: 'Tipo de autenticación' })
@@ -106,7 +136,10 @@ class Payer {
   @ApiProperty({ example: true, description: 'Si es la primera compra online' })
   is_first_purchase_online?: boolean;
 
-  @ApiProperty({ example: '2025-07-08T00:00:00Z', description: 'Última compra' })
+  @ApiProperty({
+    example: '2025-07-08T00:00:00Z',
+    description: 'Última compra',
+  })
   last_purchase?: string;
 
   @ApiProperty({ description: 'Teléfono del pagador' })
@@ -139,27 +172,42 @@ class Address {
 }
 
 class PaymentMethods {
-  @ApiProperty({ example: [{ id: 'credit_card' }], description: 'Tipos de pago excluidos' })
+  @ApiProperty({
+    example: [{ id: 'credit_card' }],
+    description: 'Tipos de pago excluidos',
+  })
   excluded_payment_types?: Array<{ id: string }>;
 
-  @ApiProperty({ example: [{ id: 'visa' }], description: 'Métodos de pago excluidos' })
+  @ApiProperty({
+    example: [{ id: 'visa' }],
+    description: 'Métodos de pago excluidos',
+  })
   excluded_payment_methods?: Array<{ id: string }>;
 
   @ApiProperty({ example: 12, description: 'Cuotas permitidas' })
   installments?: number;
 
-  @ApiProperty({ example: 'visa', description: 'ID del método de pago predeterminado' })
+  @ApiProperty({
+    example: 'visa',
+    description: 'ID del método de pago predeterminado',
+  })
   default_payment_method_id?: string;
 }
 
 export class CreateMercadopagoPreferenceInterface {
-  @ApiProperty({ example: 'approved', description: 'Tipo de retorno automático' })
+  @ApiProperty({
+    example: 'approved',
+    description: 'Tipo de retorno automático',
+  })
   auto_return?: string;
 
   @ApiProperty({ description: 'URLs de retorno' })
   back_urls?: BackUrls;
 
-  @ApiProperty({ example: 'Compra en mi tienda', description: 'Descripción del estado' })
+  @ApiProperty({
+    example: 'Compra en mi tienda',
+    description: 'Descripción del estado',
+  })
   statement_descriptor?: string;
 
   @ApiProperty({ example: true, description: 'Modo binario' })
@@ -177,16 +225,25 @@ export class CreateMercadopagoPreferenceInterface {
   @ApiProperty({ description: 'Métodos de pago' })
   payment_methods?: PaymentMethods;
 
-  @ApiProperty({ example: 'https://example.com/notification', description: 'URL de notificación' })
+  @ApiProperty({
+    example: 'https://example.com/notification',
+    description: 'URL de notificación',
+  })
   notification_url?: string;
 
   @ApiProperty({ example: true, description: 'Si expira' })
   expires?: boolean;
 
-  @ApiProperty({ example: '2025-07-09T00:00:00Z', description: 'Fecha de inicio de expiración' })
+  @ApiProperty({
+    example: '2025-07-09T00:00:00Z',
+    description: 'Fecha de inicio de expiración',
+  })
   expiration_date_from?: string;
 
-  @ApiProperty({ example: '2025-07-10T00:00:00Z', description: 'Fecha de fin de expiración' })
+  @ApiProperty({
+    example: '2025-07-10T00:00:00Z',
+    description: 'Fecha de fin de expiración',
+  })
   expiration_date_to?: string;
 }
 
