@@ -27,10 +27,6 @@ const envSchema = z.object({
     .string()
     .min(1, 'THROTTLER_LIMITER is required.')
     .transform(Number),
-  ITEMS_PER_PAGE: z
-    .string()
-    .min(1, 'ITEMS_PER_PAGE is required.')
-    .transform(Number),
   CLOUDINARY_CLOUD_NAME: z
     .string()
     .min(1, 'CLOUDINARY_CLOUD_NAME is required.'),

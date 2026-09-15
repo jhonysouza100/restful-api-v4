@@ -61,7 +61,7 @@ src/
 
 ### Variables declaradas por el esquema de entorno
 
-`PORT`, `ALLOWED_ORIGINS`, `MONGO_DB_URL`, `REDIS_URL`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `SERVER_URL`, `THROTTLER_LIMITER`, `ITEMS_PER_PAGE`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `JWT_SECRET`, `SMTP_USER`, `SMTP_PASS` y `APP_NAME`.
+`PORT`, `ALLOWED_ORIGINS`, `MONGO_DB_URL`, `REDIS_URL`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `SERVER_URL`, `THROTTLER_LIMITER`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `JWT_SECRET`, `SMTP_USER`, `SMTP_PASS` y `APP_NAME`.
 
 Se creó `.env.example` sin secretos y se confirmó que MongoDB/Redis no forman parte del esquema activo actual. `BREVO_API_KEY`, `MERCADOPAGO_API_KEY` y `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` quedan como variables opcionales/no usadas por el runtime visible; no se deben copiar secretos reales al repositorio.
 
