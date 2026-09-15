@@ -76,7 +76,7 @@ export class ProductsService {
 
     const queryBuilder = this.productsRepo
       .createQueryBuilder('product')
-      .orderBy('product.createdAt', 'DESC')
+      .orderBy('product.updatedAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
