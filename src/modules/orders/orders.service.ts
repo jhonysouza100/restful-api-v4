@@ -102,7 +102,7 @@ export class OrdersService {
 
     return {
       data,
-      meta: {
+      count: {
         page: query.page,
         limit: query.limit,
         total,

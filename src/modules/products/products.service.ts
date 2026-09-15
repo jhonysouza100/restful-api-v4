@@ -125,7 +125,7 @@ export class ProductsService {
 
     return {
       data,
-      meta: {
+      count: {
         page,
         limit,
         total,
