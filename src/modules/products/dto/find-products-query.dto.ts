@@ -17,6 +17,16 @@ const toBoolean = ({ value }: { value: unknown }) => {
 };
 
 export class FindProductsQueryDto {
+    @ApiPropertyOptional({
+    description: 'Identificador del producto',
+    example: 25,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @IsPositive()
+  id?: number;
+
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ description: 'Texto de búsqueda por términos' })

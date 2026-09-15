@@ -58,6 +58,7 @@ export class ProductsService {
     const limit = query.limit;
     const search = (query.q ?? query.name ?? '').trim();
     const terms = search.split(/\s+/).filter(Boolean);
+    const id = query.id;
     const isActive = query.isActive ?? query.status;
     const hasStock = query.stock;
     const minPrice = query.minPrice;
@@ -103,6 +104,9 @@ export class ProductsService {
 
     if (isActive !== undefined) {
       queryBuilder.andWhere('product.isActive = :isActive', { isActive });
+    }
+    if (id !== undefined) {
+      queryBuilder.andWhere('product.id = :id', { id });
     }
     if (hasStock !== undefined) {
       queryBuilder.andWhere(
