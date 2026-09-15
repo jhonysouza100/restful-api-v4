@@ -30,6 +30,7 @@ import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
 import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { DuplicateProductsDto } from './dto/duplicate-products.dto';
+import { FindProductsQueryDto } from './dto/find-products-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
 
@@ -107,7 +108,7 @@ export class ProductsController {
     @Body('product', ParseJSONPipe) createProductDto: CreateProductDto,
     @UploadedFiles()
     files: {
-      image?: Express.Multer.File;
+      image?: Express.Multer.File[];
       gallery?: Express.Multer.File[];
     },
   ) {
@@ -160,7 +161,7 @@ export class ProductsController {
       'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.',
     example: '?q=hello',
   })
-  findAll(@Query() query?: Record<string, string>) {
+  findAll(@Query() query: FindProductsQueryDto) {
     try {
       return this.productsService.findAll(query);
     } catch (error: any) {
@@ -263,7 +264,7 @@ export class ProductsController {
     @Body('product', ParseJSONPipe) product: UpdateProductDto,
     @UploadedFiles()
     files: {
-      image?: Express.Multer.File;
+      image?: Express.Multer.File[];
       gallery?: Express.Multer.File[];
     },
   ) {

@@ -1,11 +1,11 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Like, MoreThanOrEqual, Repository } from 'typeorm';
-import { env } from '../../common/config/env.config';
+import { Brackets, In, Repository } from 'typeorm';
 import { AdminContext } from '../../core/auth/auth.context';
 import { TenantContext } from '../../core/tenant/tenant.context';
 import { UploadsService } from '../uploads/uploads.service';
 import { CreateProductDto } from './dto/create-product.dto';
+import { FindProductsQueryDto } from './dto/find-products-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
 
@@ -22,7 +22,7 @@ export class ProductsService {
   async create(
     createProductDto: CreateProductDto,
     files: {
-      image?: Express.Multer.File;
+      image?: Express.Multer.File[];
       gallery?: Express.Multer.File[] | undefined;
     } = {},
   ) {
@@ -41,7 +41,7 @@ export class ProductsService {
 
     if (files.image) {
       const [uploadedImage] = await this.uploadsService.uploadImages(
-        [files.image],
+        files.image,
         `products/${this.adminContext.getAuthCompany()}`,
       );
       newProduct.image = uploadedImage;
@@ -52,68 +52,84 @@ export class ProductsService {
     throw new HttpException(`Se creó ${createProductDto.name}`, HttpStatus.OK);
   }
 
-  async findAll(query: Record<string, string> = {}) {
-    const ITEMS_PER_PAGE = env.ITEMS_PER_PAGE; // Número de elementos por página
-    // Desestructuramos los parámetros de la query
-    const { page, tenant_id, status, stock, ...filters } = query;
-    // Se asegura de que `page` tenga un valor por defecto de 1
-    const pageNumber = parseInt(page) > 0 ? parseInt(page) : 1;
+  async findAll(query: FindProductsQueryDto = new FindProductsQueryDto()) {
+    // /products?q=play 5&page=1&limit=20&minPrice=100&maxPrice=1500&isActive=true&stock=true
+    const page = query.page;
+    const limit = query.limit;
+    const search = (query.q ?? query.name ?? '').trim();
+    const terms = search.split(/\s+/).filter(Boolean);
+    const isActive = query.isActive ?? query.status;
+    const hasStock = query.stock;
+    const minPrice = query.minPrice;
+    const maxPrice = query.maxPrice;
 
-    try {
-      // Si no se pasan filtros de busqueda
-      if (!query) {
-        const [products, count] = await this.productsRepo.findAndCount({
-          skip: ITEMS_PER_PAGE * (pageNumber - 1),
-          take: ITEMS_PER_PAGE,
-        });
-        if (products.length === 0) {
-          throw new HttpException(
-            'No se encontro ningún producto',
-            HttpStatus.NOT_FOUND,
-          );
-        }
-        return { products, count };
-      }
-
-      // Construimos las condiciones de búsqueda dinámicamente a partir de los parámetros de la query
-      const whereConditions = filters
-        ? Object.entries(filters).reduce(
-            (acc, [key, value]) => {
-              acc[key] = Like(`%${value}%`); // Búsqueda por valor parcial
-              return acc;
-            },
-            {} as Record<string, any>,
-          )
-        : {};
-
-      // Agregar condición exacta para el status si se pasó
-      if (status !== undefined) {
-        whereConditions['status'] = status === 'true';
-        whereConditions['stock'] = MoreThanOrEqual(1);
-      }
-
-      if (tenant_id !== undefined) {
-        whereConditions['tenant_id'] = tenant_id;
-      }
-
-      // Realizamos la búsqueda con las condiciones dinámicas
-      const [products, count] = await this.productsRepo.findAndCount({
-        where: whereConditions,
-        skip: ITEMS_PER_PAGE * (pageNumber - 1), // Paginación
-        take: ITEMS_PER_PAGE, // Limitamos los resultados por página
-      });
-
-      if (products.length === 0) {
-        throw new HttpException(
-          'No se encontro ningún producto',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      return { products, count };
-    } catch (error: any) {
-      throw new HttpException(`${error.message}`, HttpStatus.BAD_REQUEST);
+    if (
+      minPrice !== undefined &&
+      maxPrice !== undefined &&
+      minPrice > maxPrice
+    ) {
+      throw new HttpException(
+        'minPrice no puede ser mayor que maxPrice',
+        HttpStatus.BAD_REQUEST,
+      );
     }
+
+    const queryBuilder = this.productsRepo
+      .createQueryBuilder('product')
+      .orderBy('product.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (query.tenant_id !== undefined) {
+      queryBuilder.andWhere('product.tenant_id = :tenantId', {
+        tenantId: query.tenant_id,
+      });
+    }
+
+    terms.forEach((term, index) => {
+      const parameter = `term${index}`;
+      queryBuilder.andWhere(
+        new Brackets((where) =>
+          where
+            .where(`product.name LIKE :${parameter}`)
+            .orWhere(`product.alias LIKE :${parameter}`)
+            .orWhere(`product.brand LIKE :${parameter}`)
+            .orWhere(`product.model LIKE :${parameter}`)
+            .orWhere(`product.description LIKE :${parameter}`),
+        ),
+      );
+      queryBuilder.setParameter(parameter, `%${term}%`);
+    });
+
+    if (isActive !== undefined) {
+      queryBuilder.andWhere('product.isActive = :isActive', { isActive });
+    }
+    if (hasStock !== undefined) {
+      queryBuilder.andWhere(
+        hasStock ? 'product.stock > 0' : 'product.stock <= 0',
+      );
+    }
+    if (minPrice !== undefined) {
+      queryBuilder.andWhere('product.price >= :minPrice', { minPrice });
+    }
+    if (maxPrice !== undefined) {
+      queryBuilder.andWhere('product.price <= :maxPrice', { maxPrice });
+    }
+
+    const [data, total] = await queryBuilder.getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   // Este es un método "privado" encargado de buscar productos por su ID.
@@ -310,7 +326,7 @@ export class ProductsService {
     id: number,
     data: UpdateProductDto,
     files: {
-      image?: Express.Multer.File;
+      image?: Express.Multer.File[];
       gallery?: Express.Multer.File[];
     } = {},
   ) {
@@ -360,7 +376,7 @@ export class ProductsService {
         await this.uploadsService.deleteImage(productFound.image.public_id);
       }
       const [uploadedImage] = await this.uploadsService.uploadImages(
-        [files.image],
+        files.image,
         `products/${this.adminContext.getAuthCompany()}`,
       );
       data.image = uploadedImage;

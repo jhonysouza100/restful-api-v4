@@ -3,7 +3,6 @@ import { Type } from 'class-transformer';
 import {
   IsDateString,
   IsEnum,
-  IsInt,
   IsNumber,
   IsOptional,
   IsPositive,
@@ -19,7 +18,7 @@ export class FindOrdersQueryDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   order_id?: number;
 
@@ -30,7 +29,7 @@ export class FindOrdersQueryDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @Min(1)
   page = 1;
 
@@ -42,13 +41,13 @@ export class FindOrdersQueryDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @Min(1)
   @Max(100)
   limit = 6;
 
   @ApiPropertyOptional({
-    description: 'Precio total mínimo de la orden, inclusive',
+    description: 'Precio total mínimo de la orden',
     example: 1000,
   })
   @IsOptional()
@@ -58,7 +57,7 @@ export class FindOrdersQueryDto {
   min_price?: number;
 
   @ApiPropertyOptional({
-    description: 'Precio total máximo de la orden, inclusive',
+    description: 'Precio total máximo de la orden',
     example: 5000,
   })
   @IsOptional()
