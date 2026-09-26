@@ -21,9 +21,8 @@ import {
   ApiHeader,
   ApiOperation,
   ApiParam,
-  ApiQuery,
   ApiTags,
-  getSchemaPath,
+  getSchemaPath
 } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
@@ -154,12 +153,6 @@ export class ProductsController {
     summary: 'Obtener productos',
     description:
       'Permite obtener una lista de productos con filtros opcionales.',
-  })
-  @ApiQuery({
-    name: 'q',
-    description:
-      'Filtros opcionales para la búsqueda de productos, como categoría, precio, etc.',
-    example: '?q=hello',
   })
   findAll(@Query() query: FindProductsQueryDto) {
     try {

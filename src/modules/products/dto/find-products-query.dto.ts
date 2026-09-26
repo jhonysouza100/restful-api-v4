@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsNumber,
@@ -22,98 +22,79 @@ export class FindProductsQueryDto {
     example: 25,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @IsPositive()
   id?: number;
 
-  @ApiPropertyOptional({
-    description: 'Texto de búsqueda por términos'
-  })
   @IsOptional()
   @IsString()
+  @ApiPropertyOptional({ description: 'Texto de búsqueda por términos' })
   q?: string;
 
-  @ApiPropertyOptional({
-    description: 'Alias de q para buscar por nombre'
-  })
   @IsOptional()
   @IsString()
+  @ApiPropertyOptional({ description: 'Alias de q para buscar por nombre' })
   name?: string;
 
-  @ApiPropertyOptional({
-    description: 'Parametro para clasificar busquedas',
-    example: 'new'
-  })
   @IsOptional()
   @IsString()
+  @ApiPropertyOptional({ description: 'Parametro para clasificar busquedas' })
   topic?: string;
-  
-  @ApiPropertyOptional({
-    description: 'Numero de página',
-    example: 1,
-  })
+
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
+  @ApiPropertyOptional({ example: 1, default: 1 })
   page = 1;
 
-  @ApiPropertyOptional({
-    description: 'Limite de items por página',
-    example: 6
-  })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   @Max(100)
+  @ApiPropertyOptional({ example: 20, default: 20, maximum: 100 })
   limit = 6;
 
-  @ApiPropertyOptional({
-    description: 'Precio minimo',
-    example: 100
-  })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
+  @ApiPropertyOptional({ example: 100 })
   minPrice?: number;
 
-  @ApiPropertyOptional({
-    description: 'Precio máximo',
-    example: 1000
-  })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
+  @ApiPropertyOptional({ example: 1000 })
   maxPrice?: number;
 
-  @ApiPropertyOptional({
-    description: 'Filtra por el estado isActive'
-  })
   @IsOptional()
   @Transform(toBoolean)
   @IsBoolean()
+  @ApiPropertyOptional({ description: 'Filtra por el estado isActive' })
   status?: boolean;
 
-  @ApiPropertyOptional({
-    description: 'Estado activo/inactivo de un item'
-  })
   @IsOptional()
   @Transform(toBoolean)
   @IsBoolean()
+  @ApiPropertyOptional({ description: 'Alias de status' })
   isActive?: boolean;
 
-  @ApiPropertyOptional({
-    description: 'true para productos con stock'
-  })
   @IsOptional()
   @Transform(toBoolean)
   @IsBoolean()
+  @ApiPropertyOptional({ description: 'true para productos con stock' })
   stock?: boolean;
 
-  @ApiPropertyOptional({
-    description: 'Filtra por tenant en operaciones administrativa',
-  })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @IsPositive()
+  @ApiPropertyOptional({
+    description: 'Filtra por tenant en operaciones administrativas',
+  })
   tenant_id?: number;
 }
