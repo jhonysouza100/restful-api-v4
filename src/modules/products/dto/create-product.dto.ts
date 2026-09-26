@@ -71,6 +71,12 @@ export class CreateProductDto {
   alias?: string;
 
   @ApiProperty({
+    example: 'new',
+    description: 'Parametro para busquedas clasificadas',
+  })
+  topic?: string;
+
+  @ApiProperty({
     example: 'Laptop de gama alta',
     description: 'Descripción del producto',
   })

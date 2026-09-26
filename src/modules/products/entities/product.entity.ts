@@ -29,6 +29,9 @@ export class Product {
   @Column({ type: 'varchar', length: 255, nullable: true })
   alias: string;
 
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  topic: string;
+
   @Column({ type: 'text' })
   description: string;
 

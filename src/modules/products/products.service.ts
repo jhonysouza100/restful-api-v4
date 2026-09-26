@@ -57,6 +57,7 @@ export class ProductsService {
     const page = query.page;
     const limit = query.limit;
     const search = (query.q ?? query.name ?? '').trim();
+    const topic = query.topic;
     const terms = search.split(/\s+/).filter(Boolean);
     const id = query.id;
     const isActive = query.isActive ?? query.status;
@@ -104,6 +105,9 @@ export class ProductsService {
 
     if (isActive !== undefined) {
       queryBuilder.andWhere('product.isActive = :isActive', { isActive });
+    }
+    if(topic !== undefined) {
+      queryBuilder.setParameter('product.topic = :topic', { topic });
     }
     if (id !== undefined) {
       queryBuilder.andWhere('product.id = :id', { id });
