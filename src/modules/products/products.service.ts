@@ -350,7 +350,6 @@ export class ProductsService {
       data.image = undefined;
     }
 
-    console.log("GALLERY:", data.gallery)
     // Antes de guardar el producto, quitamos las imágenes con public_id igual a "temp_id" del array de imágenes
     if (data.gallery) {
       data.gallery = data.gallery.filter(
@@ -358,33 +357,29 @@ export class ProductsService {
       );
     }
 
-    // Antes de guardar el producto, comparamos las images del productFound con las del data para actualizar "Cloudinay"
-    // Si hay imágenes en el producto encontrado, filtramos las que no están en el nuevo array de imágenes
-    let mediaToDelete: string[] = [];
+    /** Array de "public_id" que se quieren mandar a eliminar */
+    let mediaToDelete: string[] = []; 
+    // Comparamos las images del productFound con las del dto para actualizar "Cloudinay"
+    // Filtramos: Comparamos las imagenes que vienen por el DTO con las del producto, guardamos las que no esten en el DTO.
     if (data.image && productFound.image?.public_id !== data.image.public_id) {
       if (productFound.image) mediaToDelete.push(productFound.image.public_id);
     }
     if (data.gallery) {
-      for (const productFoundImage of productFound.gallery ?? []) {
-        if (!data.gallery.some((dtoImage) => dtoImage.public_id === productFoundImage.public_id)) {
-          mediaToDelete.push(productFoundImage.public_id);
+      for (const productFoundGalleryImage of productFound.gallery ?? []) {
+        if (!data.gallery.some((dtoImage) => dtoImage.public_id === productFoundGalleryImage.public_id)) {
+          mediaToDelete.push(productFoundGalleryImage.public_id);
         }
       }
     }
-
-    console.log("MEDIA TO DELETE", mediaToDelete);
-
-    // No incluir en data las imágenes cuyo public_id está marcado para eliminar.
-    if (data.gallery) {
-      data.gallery = data.gallery.filter(
-        (dtoImage) => !mediaToDelete.includes(dtoImage.public_id),
-      );
+    if(data.gallery === undefined) {
+      for (const productFoundImage of productFound.gallery ?? []) {
+        mediaToDelete.push(productFoundImage.public_id);
+      }
+      data.gallery = [];
     }
-
+    
     // Las imágenes duplicadas usan public_id ficticios "copia_" y no deben mandarse a eliminar de Cloudinary, pero si, No deben incluirse en la data de galeria.
     mediaToDelete = mediaToDelete.filter((publicId) => !publicId.includes('copia_'),);
-
-    console.log("MEDIA TO DELETE WHITOUT COPIS", mediaToDelete);
 
     for (const publicId of mediaToDelete) {
       // Se eliminan las imagenes asociadas en Cloudinary
