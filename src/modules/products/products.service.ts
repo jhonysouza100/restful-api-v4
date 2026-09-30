@@ -350,6 +350,7 @@ export class ProductsService {
       data.image = undefined;
     }
 
+    console.log("GALLERY:", data.gallery)
     // Antes de guardar el producto, quitamos las imágenes con public_id igual a "temp_id" del array de imágenes
     if (data.gallery) {
       data.gallery = data.gallery.filter(
@@ -371,6 +372,8 @@ export class ProductsService {
       }
     }
 
+    console.log("MEDIA TO DELETE", mediaToDelete);
+
     // No incluir en data las imágenes cuyo public_id está marcado para eliminar.
     if (data.gallery) {
       data.gallery = data.gallery.filter(
@@ -380,6 +383,8 @@ export class ProductsService {
 
     // Las imágenes duplicadas usan public_id ficticios "copia_" y no deben mandarse a eliminar de Cloudinary, pero si, No deben incluirse en la data de galeria.
     mediaToDelete = mediaToDelete.filter((publicId) => !publicId.includes('copia_'),);
+
+    console.log("MEDIA TO DELETE WHITOUT COPIS", mediaToDelete);
 
     for (const publicId of mediaToDelete) {
       // Se eliminan las imagenes asociadas en Cloudinary
