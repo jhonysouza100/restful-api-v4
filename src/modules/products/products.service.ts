@@ -57,7 +57,7 @@ export class ProductsService {
     const page = query.page;
     const limit = query.limit;
     const search = (query.q ?? query.name ?? '').trim();
-    const topic = query.topic;
+    const topic = query.topic?.trim();
     const terms = search.split(/\s+/).filter(Boolean);
     const id = query.id;
     const isActive = query.isActive ?? query.status;
@@ -88,6 +88,12 @@ export class ProductsService {
       });
     }
 
+    if (topic) {
+      queryBuilder.andWhere('product.topic LIKE :topic', {
+        topic: `%${topic}%`,
+      });
+    }
+
     terms.forEach((term, index) => {
       const parameter = `term${index}`;
       queryBuilder.andWhere(
@@ -106,9 +112,7 @@ export class ProductsService {
     if (isActive !== undefined) {
       queryBuilder.andWhere('product.isActive = :isActive', { isActive });
     }
-    if(topic !== undefined) {
-      queryBuilder.setParameter('product.topic = :topic', { topic });
-    }
+    
     if (id !== undefined) {
       queryBuilder.andWhere('product.id = :id', { id });
     }
@@ -355,21 +359,27 @@ export class ProductsService {
 
     // Antes de guardar el producto, comparamos las images del productFound con las del data para actualizar "Cloudinay"
     // Si hay imágenes en el producto encontrado, filtramos las que no están en el nuevo array de imágenes
-    const mediaToDelete: string[] = [];
+    let mediaToDelete: string[] = [];
     if (data.image && productFound.image?.public_id !== data.image.public_id) {
       if (productFound.image) mediaToDelete.push(productFound.image.public_id);
     }
     if (data.gallery) {
-      for (const image of productFound.gallery ?? []) {
-        if (
-          !data.gallery.some(
-            (newImage) => newImage.public_id === image.public_id,
-          )
-        ) {
-          mediaToDelete.push(image.public_id);
+      for (const productFoundImage of productFound.gallery ?? []) {
+        if (!data.gallery.some((dtoImage) => dtoImage.public_id === productFoundImage.public_id)) {
+          mediaToDelete.push(productFoundImage.public_id);
         }
       }
     }
+
+    // No incluir en data las imágenes cuyo public_id está marcado para eliminar.
+    if (data.gallery) {
+      data.gallery = data.gallery.filter(
+        (dtoImage) => !mediaToDelete.includes(dtoImage.public_id),
+      );
+    }
+
+    // Las imágenes duplicadas usan public_id ficticios "copia_" y no deben mandarse a eliminar de Cloudinary, pero si, No deben incluirse en la data de galeria.
+    mediaToDelete = mediaToDelete.filter((publicId) => !publicId.includes('copia_'),);
 
     for (const publicId of mediaToDelete) {
       // Se eliminan las imagenes asociadas en Cloudinary
@@ -450,7 +460,7 @@ export class ProductsService {
             ...image,
             public_id: `copia_${index + 1}_${imageIndex + 1}`,
           })),
-        }),
+      }),
     );
 
     await this.productsRepo.save(duplicatedProducts);
