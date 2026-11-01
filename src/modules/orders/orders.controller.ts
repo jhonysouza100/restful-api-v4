@@ -90,6 +90,31 @@ export class OrdersController {
     return this.ordersService.updateOrderPayment(id, data);
   }
 
+  @Post('free-shipping')
+  @UseTenantGuard()
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'API Key (optional if using domain)',
+    required: false,
+  })
+  @ApiOperation({
+    summary: 'Crear una orden con envío gratuito',
+    description:
+      'Crea una orden sin calcular ni agregar el costo de envío a la preferencia de pago.',
+  })
+  @ApiBody({
+    type: CreateOrderDto,
+    description:
+      'Datos para crear una orden de compra con envío gratuito.',
+  })
+  createFreeShippingOrder(@Body() orderData: CreateOrderDto) {
+    try {
+      return this.ordersService.createFreeShippingOrder(orderData);
+    } catch (error: any) {
+      throw new HttpException(`${error.message}`, error.status);
+    }
+  }
+
   @Post()
   @UseTenantGuard()
   @ApiHeader({
