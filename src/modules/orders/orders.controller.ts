@@ -17,8 +17,9 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { Role } from '../../common/enums/roles.enum';
+import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
+import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { MercadopagoWebhookPayload } from '../payments/interfaces/mercadopago-webhook.interface';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { FindOrdersQueryDto } from './dto/find-orders-query.dto';
@@ -28,7 +29,6 @@ import {
   UpdateOrderStatusDto,
 } from './dto/update-order.dto';
 import { OrdersService } from './orders.service';
-import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
 
 /**
  * Recomendaciones para usuarios
@@ -88,6 +88,31 @@ export class OrdersController {
     @Body() data: UpdateOrderPaymentDto,
   ) {
     return this.ordersService.updateOrderPayment(id, data);
+  }
+
+  @Post('free-shipping')
+  @UseTenantGuard()
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'API Key (optional if using domain)',
+    required: false,
+  })
+  @ApiOperation({
+    summary: 'Crear una orden con envío gratuito',
+    description:
+      'Crea una orden sin calcular ni agregar el costo de envío a la preferencia de pago.',
+  })
+  @ApiBody({
+    type: CreateOrderDto,
+    description:
+      'Datos para crear una orden de compra con envío gratuito.',
+  })
+  createFreeShippingOrder(@Body() orderData: CreateOrderDto) {
+    try {
+      return this.ordersService.createFreeShippingOrder(orderData);
+    } catch (error: any) {
+      throw new HttpException(`${error.message}`, error.status);
+    }
   }
 
   @Post()

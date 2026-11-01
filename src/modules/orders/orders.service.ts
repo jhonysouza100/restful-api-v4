@@ -200,6 +200,14 @@ export class OrdersService {
   }
 
   async createOrder(data: CreateOrderDto) {
+    return this.createOrderInternal(data, true);
+  }
+
+  async createFreeShippingOrder(data: CreateOrderDto) {
+    return this.createOrderInternal(data, false);
+  }
+
+  private async createOrderInternal(data: CreateOrderDto, calculateShipping: boolean) {
     // Validar que data existe y tiene la estructura correcta
     if (!data) {
       throw new HttpException("Los datos de la orden son requeridos", HttpStatus.BAD_REQUEST)
@@ -287,7 +295,7 @@ export class OrdersService {
     // Si hay datos de envio. Hay veces que se crea una orden donde no se incluyen los datos de envio.
     let dimensionsData;
     let shipmentCost;
-    if (data.shipment) {
+    if (data.shipment && calculateShipping) {
       // Se calcula el envío y las dimensiones del paquete.
       const { dimensions, rate } = await this.getTotalShipmentCost(data.items, data.shipment);
 
@@ -316,12 +324,15 @@ export class OrdersService {
       payment_url: createdPreference.init_point
     };
 
-    const shipmentdata = {
-      ...data.shipment,
-      dimensions: dimensionsData,
-      shipment_cost: shipmentCost,
-      deliveryStatus: ShipmentStatusEnum.PENDING,
-    }
+    const shipmentdata = data.shipment
+      ? {
+        ...data.shipment,
+        ...(calculateShipping
+          ? { dimensions: dimensionsData, shipment_cost: shipmentCost }
+          : { shipment_cost: 0 }),
+        deliveryStatus: ShipmentStatusEnum.PENDING,
+      }
+      : undefined;
 
     await this.ordersRepo.update(
       { id: savedOrder.id },
