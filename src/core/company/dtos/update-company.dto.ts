@@ -1,7 +1,7 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';
-import { CreateTenantDto } from './create-tenant.dto';
+import { CreateCompanyDto } from './create-company.dto';
 
 export class CorreoArgentinoDto {
   @ApiProperty({
@@ -36,7 +36,7 @@ export class CorreoArgentinoDto {
 export class CreatePrivateKeysDto {
   @ApiProperty({
     description:
-      'Contraseña de autenticación SMTP del tenant para enviar correos a través de Gmail. Para nuevos proyectos, utilice OAuth 2.0 (o una contraseña de la aplicación si ya tiene activada la verificación Google 2‑Step)',
+      'Contraseña de autenticación SMTP del company para enviar correos a través de Gmail. Para nuevos proyectos, utilice OAuth 2.0 (o una contraseña de la aplicación si ya tiene activada la verificación Google 2‑Step)',
     example: 'abc123_secure_password',
   })
   @IsOptional()
@@ -68,7 +68,7 @@ export class CreatePrivateKeysDto {
   correo_argentino?: CorreoArgentinoDto;
 }
 
-export class UpdateTenantDto extends PartialType(CreateTenantDto) {
+export class UpdateCompanyDto extends PartialType(CreateCompanyDto) {
   @ApiProperty({
     description:
       'Claves privadas para autenticación en servicios externos (ej: SMTP, Mercado Pago, Google Sheets, etc.)',

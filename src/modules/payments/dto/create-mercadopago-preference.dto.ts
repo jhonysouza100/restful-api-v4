@@ -63,11 +63,11 @@ class MercadopagoItemDto {
   picture_url?: string;
 }
 
-class TenantDto {
+class CompanyDto {
   @ApiProperty({
     example: 'TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     description:
-      'Clave privada interna del tenant; nunca debe venir del cliente.',
+      'Clave privada interna del company; nunca debe venir del cliente.',
   })
   @IsString()
   private_key!: string;
@@ -156,12 +156,12 @@ export class CreateMercadopagoPreferenceDto {
   items?: MercadopagoItemDto[];
 
   @ApiProperty({
-    type: TenantDto,
+    type: CompanyDto,
     description: 'Información de la empresa / tenancy',
   })
   @ValidateNested()
-  @Type(() => TenantDto)
-  tenant!: TenantDto;
+  @Type(() => CompanyDto)
+  company!: CompanyDto;
 
   @ApiProperty({ example: 1234, description: 'ID interno de la orden' })
   @IsNumber()

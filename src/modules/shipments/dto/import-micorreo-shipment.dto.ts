@@ -76,7 +76,7 @@ export class MiCorreoSenderDto {
   @ApiProperty({
     example: 'Juan Pérez',
     description:
-      'Nombre del remitente. Si no se manda un nombre de remitente, se va insertar el nombre del Tenant',
+      'Nombre del remitente. Si no se manda un nombre de remitente, se va insertar el nombre del Company',
   })
   @IsString()
   @IsOptional()

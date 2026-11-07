@@ -2,29 +2,29 @@ import { Injectable, Scope } from '@nestjs/common';
 import {
   CorreoArgentinoDto,
   CreatePrivateKeysDto,
-} from './dtos/update-tenant.dto';
+} from './dtos/update-company.dto';
 
 /**
- * TenantContext
+ * CompanyContext
  *
- * Servicio de contexto multi-tenant con SCOPE REQUEST.
+ * Servicio de contexto multi-company con SCOPE REQUEST.
  *
  * IMPORTANTE: Se crea UNA INSTANCIA por cada HTTP request.
- * Esto asegura que cada request tenga datos del tenant aislados
+ * Esto asegura que cada request tenga datos del company aislados
  * sin riesgo de contaminación entre requests concurrentes.
  *
  * Uso:
- * - El TenantGuard establece el contexto: setTenantData()
+ * - El CompanyGuard establece el contexto: setCompanyData()
  * - Otros servicios acceden inyectando este servicio
  * - Los datos se limpian automáticamente al terminar el request
  */
 @Injectable({ scope: Scope.REQUEST })
-export class TenantContext {
+export class CompanyContext {
   /**
-   * Almacena datos del tenant actual
+   * Almacena datos del company actual
    * Se limpia automáticamente al finalizar el request
    */
-  private tenantData: {
+  private companyData: {
     id: number;
     email: string;
     domain: string;
@@ -34,12 +34,12 @@ export class TenantContext {
   };
 
   /**
-   * Establece las credenciales del tenant actual
-   * Llamado por TenantGuard después de validar el tenant
+   * Establece las credenciales del company actual
+   * Llamado por CompanyGuard después de validar el company
    *
-   * @param data - Datos del tenant (id, email, domain, etc.)
+   * @param data - Datos del company (id, email, domain, etc.)
    */
-  setTenantData(data: {
+  setCompanyData(data: {
     id: number;
     email: string;
     domain: string;
@@ -47,7 +47,7 @@ export class TenantContext {
     fullName: string;
     private_keys: CreatePrivateKeysDto;
   }): void {
-    this.tenantData = {
+    this.companyData = {
       id: data.id,
       email: data.email,
       domain: data.domain,
@@ -58,54 +58,54 @@ export class TenantContext {
   }
 
   /**
-   * Obtiene el ID del tenant actual
-   * @returns ID del tenant
+   * Obtiene el ID del company actual
+   * @returns ID del company
    */
-  getTenantId(): number {
-    return this.tenantData.id;
+  getCompanyId(): number {
+    return this.companyData.id;
   }
 
   /**
-   * Obtiene el dominio del tenant actual
+   * Obtiene el dominio del company actual
    * @returns Dominio personalizado
    */
-  getTenantDomain(): string {
-    return this.tenantData.domain;
+  getCompanyDomain(): string {
+    return this.companyData.domain;
   }
 
   /**
-   * Obtiene el nombre de la empresa del tenant actual
+   * Obtiene el nombre de la empresa del company actual
    * @returns Nombre de empresa
    */
-  getTenantCompany(): string {
-    return this.tenantData.company;
+  getCompanyCompany(): string {
+    return this.companyData.company;
   }
 
   /**
-   * Obtiene el nombre completo del tenant actual
+   * Obtiene el nombre completo del company actual
    * @returns Nombre completo del proprietario
    */
   getFullName(): string {
-    return this.tenantData.fullName;
+    return this.companyData.fullName;
   }
 
   /**
-   * Obtiene las credenciales de email (SMTP) del tenant actual
+   * Obtiene las credenciales de email (SMTP) del company actual
    * @returns EmailCredentialsDto {user, pass}
    */
-  getTenantSMTP(): { user: string; pass: string } {
+  getCompanySMTP(): { user: string; pass: string } {
     return {
-      user: this.tenantData.email,
-      pass: this.tenantData.private_keys?.smtp || '',
+      user: this.companyData.email,
+      pass: this.companyData.private_keys?.smtp || '',
     };
   }
 
   /**
-   * Obtiene el token de Mercadopago del tenant actual
+   * Obtiene el token de Mercadopago del company actual
    * @returns Token Mercadopago o undefined
    */
   getTanantMercadopago(): string {
-    return this.tenantData.private_keys?.mercadopago || '';
+    return this.companyData.private_keys?.mercadopago || '';
   }
 
   /**
@@ -113,14 +113,14 @@ export class TenantContext {
    * @returns CorreoArgentinoDto
    */
   getMiCorreoCredentials(): CorreoArgentinoDto | undefined {
-    return this.tenantData.private_keys.correo_argentino;
+    return this.companyData.private_keys.correo_argentino;
   }
 
   /**
-   * Obtiene el ID de Google Sheets del tenant actual
+   * Obtiene el ID de Google Sheets del company actual
    * @returns ID de la hoja de cálculo
    */
-  getTenantSpreadsheets(): string {
-    return this.tenantData.private_keys?.spreadsheets || '';
+  getCompanySpreadsheets(): string {
+    return this.companyData.private_keys?.spreadsheets || '';
   }
 }

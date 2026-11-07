@@ -71,7 +71,7 @@ export interface MercadoPagoPayment {
   store_id: string | null;
   tags: string[] | null;
   taxes_amount: number;
-  tenant_context: string;
+  company_context: string;
   transaction_amount: number;
   transaction_amount_refunded: number;
   transaction_details: TransactionDetails;

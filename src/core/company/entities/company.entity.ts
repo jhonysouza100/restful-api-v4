@@ -6,11 +6,11 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Role } from '../../../common/enums/roles.enum';
-import { CreateAccessKeysDto } from '../dtos/create-tenant.dto';
-import { CreatePrivateKeysDto } from '../dtos/update-tenant.dto';
+import { CreateAccessKeysDto } from '../dtos/create-company.dto';
+import { CreatePrivateKeysDto } from '../dtos/update-company.dto';
 
-@Entity('tenants')
-export class TenantEntity {
+@Entity('companies')
+export class CompanyEntity {
   @PrimaryGeneratedColumn()
   id: number;
 

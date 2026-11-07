@@ -1,13 +1,13 @@
 # Módulo de Emails
 
 ## Descripción General
-Módulo responsable de enviar emails utilizando Nodemailer y Gmail. Implementa autenticación basada en inquilinos (multi-tenant) con validación de API Key y dominio.
+Módulo responsable de enviar emails utilizando Nodemailer y Gmail. Implementa autenticación basada en inquilinos (multi-company) con validación de API Key y dominio.
 
 ## Funcionalidad Principal
 
 ### Endpoint
 - **POST** `/emails` - Envía un email
-- Requiere `TenantGuard` para validar el tenant (mediante header `x-api-key` o dominio)
+- Requiere `CompanyGuard` para validar el company (mediante header `x-api-key` o dominio)
 - Retorna `201 Created` con información del envelope
 
 ## Estructura de Datos
@@ -36,16 +36,16 @@ EmailAttachmentsDto {
 ## Flujo de Ejecución
 
 1. Cliente envía POST a `/emails` con `SendEmailDto` y header `x-api-key`
-2. `TenantGuard` valida el tenant
-3. `EmailsService` obtiene credenciales del tenant del contexto
+2. `CompanyGuard` valida el company
+3. `EmailsService` obtiene credenciales del company del contexto
 4. Crea transporter de Nodemailer con Gmail
 5. Envía email con Nodemailer
 6. Retorna envelope o lanza excepción
 
 ## Configuración Requerida
 
-Cada tenant debe tener configuradas sus credenciales de Gmail en la base de datos:
-- **user**: Correo de Gmail del tenant
+Cada company debe tener configuradas sus credenciales de Gmail en la base de datos:
+- **user**: Correo de Gmail del company
 - **pass**: Contraseña o app password de Gmail
 
 ## Ejemplo de Uso
@@ -70,8 +70,8 @@ Headers: x-api-key: tu-api-key
 
 ## Puntos Importantes para Mantenimiento
 
-- **Multi-tenant**: Las credenciales se obtienen del contexto actual del tenant
-- **Seguridad**: Validación obligatoria mediante `TenantGuard`
+- **Multi-company**: Las credenciales se obtienen del contexto actual del company
+- **Seguridad**: Validación obligatoria mediante `CompanyGuard`
 - **Errores**: Se capturan excepciones de Nodemailer y se retornan como `HttpException`
 - **Attachments**: Soporta archivos adjuntos con personalización de nombres y tipos MIME
 - **Gmail SMTP**: Usar contraseña de aplicación específica para Gmail (no contraseña regular si 2FA está activo)

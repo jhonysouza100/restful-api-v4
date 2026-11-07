@@ -35,7 +35,7 @@ export class CookiesGuard implements CanActivate {
       // console.log(payload); // Log the payload for debugging purposes
 
       // (Antes) Guarda las credenciales del auth en un contexto
-      // Otros servicios pueden acceder al tenant actual inyectando AdminContext
+      // Otros servicios pueden acceder al company actual inyectando AdminContext
       this.adminContext.setAuthData(payload);
 
       request['admin'] = payload;

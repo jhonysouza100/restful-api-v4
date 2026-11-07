@@ -18,7 +18,7 @@ IMPORTANTE: `createMercadopagoPreference` es un método de servicio pensado para
 
 1. El controlador recibe un payload que cumple `CreateMercadopagoPreferenceDto` (ver `dto/create-mercadopago-preference.dto.ts`). Principales campos:
 	- items: array de objetos con id, title, quantity, price_with_discounts, category, description?
-	- tenant: { private_key, domain, company }
+	- company: { private_key, domain, company }
 	- order_id: id interno de la orden
 	- back_urls?: { success, failure, pending }
 
@@ -26,20 +26,20 @@ IMPORTANTE: `createMercadopagoPreference` es un método de servicio pensado para
 
 3. Añade valores por defecto adicionales:
 	- auto_return: "approved"
-	- back_urls: si no se pasan en el request se construyen usando `tenant.domain`
+	- back_urls: si no se pasan en el request se construyen usando `company.domain`
 	- external_reference: `order_id.toString()` (para relacionar la preferencia con la orden local)
 	- notification_url: `${env.SERVER_URL}/api/v1/payments/mercadopago/confirm`
-	- statement_descriptor: nombre de la compañía (tenant.company)
+	- statement_descriptor: nombre de la compañía (company.company)
 
-4. Hace un POST a `https://api.mercadopago.com/checkout/preferences` con Authorization: Bearer {tenant.private_key}.
+4. Hace un POST a `https://api.mercadopago.com/checkout/preferences` con Authorization: Bearer {company.private_key}.
 
 5. Devuelve la respuesta de Mercado Pago (tipada como `MercadopagoResponseInterface`) al cliente que llamó al endpoint.
 
 Puntos importantes:
-- El `private_key` es sensible: en la implementación actual se espera en `tenant.private_key`. En producción es preferible obtener la key desde el contexto del tenant en servidor (no enviar desde cliente) y guardarla de forma segura.
+- El `private_key` es sensible: en la implementación actual se espera en `company.private_key`. En producción es preferible obtener la key desde el contexto del company en servidor (no enviar desde cliente) y guardarla de forma segura.
 - El campo `price_with_discounts` debe venir ya calculado por el módulo que crea la orden.
 
-Nota adicional: si se necesita que un endpoint público inicie la creación de la preferencia (por ejemplo un checkout público), ese endpoint debe pertenecer al módulo de negocio (orders/checkout) y validar al tenant antes de llamar internamente a `PaymentsService.createMercadopagoPreference`. Evitar exponer la función del servicio de forma directa en rutas públicas del módulo `payments`.
+Nota adicional: si se necesita que un endpoint público inicie la creación de la preferencia (por ejemplo un checkout público), ese endpoint debe pertenecer al módulo de negocio (orders/checkout) y validar al company antes de llamar internamente a `PaymentsService.createMercadopagoPreference`. Evitar exponer la función del servicio de forma directa en rutas públicas del módulo `payments`.
 
 ## Flujo — confirmMercadopagoPayment (webhook)
 
@@ -68,7 +68,7 @@ Puntos importantes:
 
 ## Configuración requerida
 - `env.SERVER_URL` debe apuntar a la URL pública donde Mercado Pago puede enviar webhooks.
-- Cada tenant debe disponer de su `private_key` (Mercado Pago) para crear preferencias y consultar pagos.
+- Cada company debe disponer de su `private_key` (Mercado Pago) para crear preferencias y consultar pagos.
 
 ## Ejemplos rápidos
 
@@ -79,7 +79,7 @@ Ejemplo mínimo para crear preferencia (JSON):
   "items": [
 	 { "id": 1, "title": "Producto A", "quantity": 1, "price_with_discounts": 100, "category": "clothing" }
   ],
-  "tenant": { "private_key": "TEST-xxx", "domain": "https://miempresa.com", "company": "Mi Empresa" },
+  "company": { "private_key": "TEST-xxx", "domain": "https://miempresa.com", "company": "Mi Empresa" },
   "order_id": 666
 }
 ```

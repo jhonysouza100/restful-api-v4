@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindOptionsWhere, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { env } from '../../common/config/env.config';
 import { AdminContext } from '../../core/auth/auth.context';
-import { TenantContext } from '../../core/tenant/tenant.context';
-import { TenantsService } from '../../core/tenant/tenants.service';
+import { CompanyContext } from '../../core/company/company.context';
+import { CompaniesService } from '../../core/company/companies.service';
 import { SendEmailDto } from '../emails/dtos/send-mail.dto';
 import { EmailsService } from '../emails/emails.service';
 import { CreateOrderDto, CreateOrderShipmentDto, CretateOrderItemsDto } from '../orders/dto/create-order.dto';
@@ -38,8 +38,8 @@ export class OrdersService {
     private readonly productsService: ProductsService,
     private readonly paymentsService: PaymentsService,
     private readonly adminContext: AdminContext,
-    private readonly tenantContext: TenantContext,
-    private readonly tenantService: TenantsService,
+    private readonly companyContext: CompanyContext,
+    private readonly companyService: CompaniesService,
     private readonly shipmentService: ShipmentsService,
     private readonly emailsService: EmailsService
   ) { }
@@ -148,13 +148,13 @@ export class OrdersService {
       throw new HttpException('No hay datos para actualizar', HttpStatus.BAD_REQUEST);
     }
 
-    const tenantId = this.adminContext.getAuthId();
+    const companyId = this.adminContext.getAuthId();
     let updatedOrder: Order;
     let previousStatus: OrderStatusEnum = OrderStatusEnum.PENDING;
 
     updatedOrder = await this.ordersRepo.manager.transaction(async (manager) => {
       const orderRepository = manager.getRepository(Order);
-      const order = await orderRepository.findOne({ where: { id, tenant_id: tenantId } });
+      const order = await orderRepository.findOne({ where: { id, tenant_id: companyId } });
 
       if (!order) {
         throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
@@ -180,7 +180,7 @@ export class OrdersService {
     const email = order.shipment?.email;
     if (!email) return;
 
-    const tenant = await this.tenantService.findById(order.tenant_id);
+    const company = await this.companyService.findById(order.tenant_id);
     const subject = action === 'status'
       ? `Actualización del estado de tu compra #${order.id}`
       : `Actualización de envío de tu compra #${order.id}`;
@@ -189,13 +189,13 @@ export class OrdersService {
       : `<p>La información de envío de tu orden fue actualizada.</p>`;
 
     await this.emailsService.sendMail({
-      from: tenant.company,
+      from: company.company,
       to: [email],
       subject,
       htmlContent: `<p>Hola ${order.shipment?.fullName || ''},</p>${statusText}<p>Compra #${order.id}</p>`,
     }, [], {
-      user: tenant.email,
-      pass: tenant.private_keys?.smtp || '',
+      user: company.email,
+      pass: company.private_keys?.smtp || '',
     });
   }
 
@@ -237,8 +237,8 @@ export class OrdersService {
       data.items.map(async (el) => {
         try {
           // Busca y valida si un producto esta activo y/o posee stock y verifica la tenencia
-          const tenantId = this.tenantContext.getTenantId();
-          const productFound = await this.productsService.validateProductForSale(el.item_id, el.quantity, tenantId);
+          const companyId = this.companyContext.getCompanyId();
+          const productFound = await this.productsService.validateProductForSale(el.item_id, el.quantity, companyId);
 
           // Devuelve un "item" (para crear una nueva "order") con los datos de un producto buscado en la database
           return {
@@ -262,7 +262,7 @@ export class OrdersService {
     const newOrderPayload: OrderInterface = {
       // coupon: { code: couponFound?.code || null, discount: couponFound?.discount || null },
       items: [...productsList],
-      tenant_id: this.tenantContext.getTenantId(),
+      tenant_id: this.companyContext.getCompanyId(),
       user_id: data?.user_id || 0,
       subtotal: subtotal,
       total: Number(subtotal) - (Number(subtotal) * Number(couponFound?.discount || 0) / 100)
@@ -285,10 +285,10 @@ export class OrdersService {
         picture_url: el?.image_url,
       })),
       order_id: savedOrder.id,
-      tenant: {
-        company: this.tenantContext.getTenantCompany(),
-        private_key: this.tenantContext.getTanantMercadopago(),
-        domain: this.tenantContext.getTenantDomain()
+      company: {
+        company: this.companyContext.getCompanyCompany(),
+        private_key: this.companyContext.getTanantMercadopago(),
+        domain: this.companyContext.getCompanyDomain()
       }
     }
 
@@ -376,10 +376,10 @@ export class OrdersService {
     */
 
     if (payload.data?.id) {
-      const tenantSearched = await this.tenantService.findByMercadopagoUserId(payload?.user_id);
+      const companySearched = await this.companyService.findByMercadopagoUserId(payload?.user_id);
       const preferenceSearched = await this.paymentsService.getMercadopagoPaymentById({
         id: payload.data.id,
-        authorization: tenantSearched?.private_keys.mercadopago
+        authorization: companySearched?.private_keys.mercadopago
       })
       const orderSearched = await this.ordersRepo.findOne({ where: { id: parseInt(preferenceSearched.external_reference) } })
 
@@ -396,8 +396,8 @@ export class OrdersService {
           // Se restaura el inventario por cadaa item.
           await this.productsService.restoreCancelledProduct(orderSearched?.items);
           await this.notifyOrderByEmail({
-            from: `${tenantSearched?.company}`,
-            to: tenantSearched?.email as string,
+            from: `${companySearched?.company}`,
+            to: companySearched?.email as string,
             topic: `${OrderTopicEnum.PAGO_PENDIENTE}`,
             order: orderSearched
           });
@@ -416,11 +416,11 @@ export class OrdersService {
           // Se crea el payload para el envío.
           if (orderSearched.shipment) {
             const data: ImportMiCorreoShipmentDto = {
-              customerId: tenantSearched?.private_keys.correo_argentino?.customer_id,
+              customerId: companySearched?.private_keys.correo_argentino?.customer_id,
               extOrderId: orderSearched.id.toString(),
               orderNumber: orderSearched.id.toString(),
               sender: {
-                name: tenantSearched?.fullName || ""
+                name: companySearched?.fullName || ""
               },
               recipient: {
                 name: orderSearched.shipment.fullName || "",
@@ -443,9 +443,9 @@ export class OrdersService {
             }
             // Se importa el envío a la plataforma de MiCorreo.
             await this.shipmentService.importMiCorreoShipment(data, {
-              user: tenantSearched?.private_keys.correo_argentino?.user,
-              password: tenantSearched?.private_keys.correo_argentino?.password,
-              customer_id: tenantSearched?.private_keys.correo_argentino?.customer_id
+              user: companySearched?.private_keys.correo_argentino?.user,
+              password: companySearched?.private_keys.correo_argentino?.password,
+              customer_id: companySearched?.private_keys.correo_argentino?.customer_id
             });
           }
           // Se actualiza el estado de la orden.
@@ -460,15 +460,15 @@ export class OrdersService {
           );
 
           await this.notifyOrderByEmail({
-            from: `${tenantSearched?.company}`,
-            to: tenantSearched?.email as string,
+            from: `${companySearched?.company}`,
+            to: companySearched?.email as string,
             topic: `${OrderTopicEnum.NUEVA_VENTA}`,
             order: orderSearched
           });
 
           await this.notificationCustomerByEmail({
-            user: { email: tenantSearched?.email as string, pass: tenantSearched?.private_keys.smtp as string },
-            from: `${tenantSearched?.company}`,
+            user: { email: companySearched?.email as string, pass: companySearched?.private_keys.smtp as string },
+            from: `${companySearched?.company}`,
             to: orderSearched.shipment?.email || "",
             topic: `${OrderTopicEnum.PAGO_APROBADO}`,
             order: orderSearched

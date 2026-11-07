@@ -5,11 +5,11 @@ import { jwtConstants } from '../common/constants';
 import { AdminContext } from './auth/auth.context';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
-import { TenantEntity } from './tenant/entities/tenant.entity';
-import { TenantInterceptor } from './tenant/interceptors/tenant.interceptor';
-import { TenantContext } from './tenant/tenant.context';
-import { TenantsController } from './tenant/tenants.controller';
-import { TenantsService } from './tenant/tenants.service';
+import { CompanyEntity } from './company/entities/company.entity';
+import { CompanyInterceptor } from './company/interceptors/company.interceptor';
+import { CompanyContext } from './company/company.context';
+import { CompaniesController } from './company/companies.controller';
+import { CompaniesService } from './company/companies.service';
 
 @Global()
 @Module({
@@ -18,21 +18,21 @@ import { TenantsService } from './tenant/tenants.service';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '1d' },
     }),
-    TypeOrmModule.forFeature([TenantEntity]),
+    TypeOrmModule.forFeature([CompanyEntity]),
   ],
-  controllers: [TenantsController, AuthController],
+  controllers: [CompaniesController, AuthController],
   providers: [
-    TenantContext,
-    TenantsService,
-    TenantInterceptor,
+    CompanyContext,
+    CompaniesService,
+    CompanyInterceptor,
     AuthService,
     AdminContext,
     JwtService,
   ],
   exports: [
-    TenantContext,
-    TenantsService,
-    TenantInterceptor,
+    CompanyContext,
+    CompaniesService,
+    CompanyInterceptor,
     AdminContext,
     JwtService,
   ],

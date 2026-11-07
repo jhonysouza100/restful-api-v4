@@ -26,7 +26,7 @@ import {
 } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
-import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
+import { UseCompanyGuard } from '../../core/company/decorators/company.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { DuplicateProductsDto } from './dto/duplicate-products.dto';
 import { FindProductsQueryDto } from './dto/find-products-query.dto';
@@ -163,7 +163,7 @@ export class ProductsController {
   }
 
   @Get(':slug')
-  @UseTenantGuard()
+  @UseCompanyGuard()
   @ApiHeader({
     name: 'x-api-key',
     description: 'API Key (optional if using domain)',
@@ -187,7 +187,7 @@ export class ProductsController {
   }
 
   @Get('/slug/sitemap')
-  @UseTenantGuard()
+  @UseCompanyGuard()
   @ApiHeader({
     name: 'x-api-key',
     description: 'API Key (optional if using domain)',

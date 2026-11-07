@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Repository } from 'typeorm';
 import { AdminContext } from '../../core/auth/auth.context';
-import { TenantContext } from '../../core/tenant/tenant.context';
+import { CompanyContext } from '../../core/company/company.context';
 import { UploadsService } from '../uploads/uploads.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { FindProductsQueryDto } from './dto/find-products-query.dto';
@@ -15,7 +15,7 @@ export class ProductsService {
     @InjectRepository(Product)
     private readonly productsRepo: Repository<Product>,
     private readonly adminContext: AdminContext,
-    private readonly tenantContext: TenantContext,
+    private readonly companyContext: CompanyContext,
     private readonly uploadsService: UploadsService,
   ) {}
 
@@ -83,8 +83,8 @@ export class ProductsService {
       .take(limit);
 
     if (query.tenant_id !== undefined) {
-      queryBuilder.andWhere('product.tenant_id = :tenantId', {
-        tenantId: query.tenant_id,
+      queryBuilder.andWhere('product.tenant_id = :companyId', {
+        companyId: query.tenant_id,
       });
     }
 
@@ -217,7 +217,7 @@ export class ProductsService {
   // Incrementa las unidades vendidas de forma transaccional y aislada por tienda.
   async incrementSales(
     data?: { item_id: number; quantity: number }[],
-    tenantId = this.tenantContext.getTenantId(),
+    companyId = this.companyContext.getCompanyId(),
   ) {
     if (!data?.length) return;
 
@@ -239,7 +239,7 @@ export class ProductsService {
     await this.productsRepo.manager.transaction(async (manager) => {
       for (const [productId, quantity] of quantities) {
         const product = await manager.findOne(Product, {
-          where: { id: productId, tenant_id: tenantId },
+          where: { id: productId, tenant_id: companyId },
           lock: { mode: 'pessimistic_write' },
         });
         if (!product) {
@@ -313,7 +313,7 @@ export class ProductsService {
   // Este metodo se va utilizar en la "tienda" para cargar la pagina de un producto por el slug (nombre amigable para URL). (Controller Scope).
   async findBySlug(slug: string) {
     const product = await this.productsRepo.findOne({
-      where: { slug, tenant_id: this.tenantContext.getTenantId() },
+      where: { slug, tenant_id: this.companyContext.getCompanyId() },
       relations: ['questions', 'reviews'],
     }); // { where: { name: Like(`%${name}%`) } }
     if (!product)
@@ -326,9 +326,9 @@ export class ProductsService {
 
   // Este metodo se va utilizar en la "tienda" para crear el sitemap de todos los productos de forma dinámica. (Controller Scope).
   async getSitemapBySlug() {
-    const tenantId = this.tenantContext.getTenantId();
+    const companyId = this.companyContext.getCompanyId();
     const productsBySlug = await this.productsRepo.find({
-      where: { isActive: true, tenant_id: tenantId },
+      where: { isActive: true, tenant_id: companyId },
       select: ['slug', 'image', 'updatedAt'],
     });
     return productsBySlug;
@@ -434,10 +434,10 @@ export class ProductsService {
   }
 
   async duplicate(ids: number[]) {
-    const tenantId = this.adminContext.getAuthId();
+    const companyId = this.adminContext.getAuthId();
 
     const products = await this.productsRepo.find({
-      where: { id: In(ids), tenant_id: tenantId },
+      where: { id: In(ids), tenant_id: companyId },
     });
 
     if (products.length === 0) {
@@ -452,7 +452,7 @@ export class ProductsService {
         this.productsRepo.create({
           ...product,
           name: `${product.name} (Copia ${index + 1})`,
-          tenant_id: tenantId,
+          tenant_id: companyId,
           image: product.image
             ? { ...product.image, public_id: `copia_${index + 1}` }
             : undefined,
@@ -472,10 +472,10 @@ export class ProductsService {
   }
 
   async desactive(ids: number[]) {
-    const tenantId = this.adminContext.getAuthId();
+    const companyId = this.adminContext.getAuthId();
 
     const products = await this.productsRepo.find({
-      where: { id: In(ids), tenant_id: tenantId },
+      where: { id: In(ids), tenant_id: companyId },
     });
 
     if (products.length === 0) {
@@ -500,9 +500,9 @@ export class ProductsService {
   async remove(idsParam: string) {
     const ids = this.parseStringToArray(idsParam);
 
-    const tenantId = this.adminContext.getAuthId();
+    const companyId = this.adminContext.getAuthId();
     const products = await this.productsRepo.find({
-      where: { id: In(ids), tenant_id: tenantId },
+      where: { id: In(ids), tenant_id: companyId },
     });
 
     if (products.length !== ids.length) {
@@ -514,7 +514,7 @@ export class ProductsService {
       );
     }
 
-    await this.productsRepo.delete({ id: In(ids), tenant_id: tenantId });
+    await this.productsRepo.delete({ id: In(ids), tenant_id: companyId });
 
     await Promise.all(
       products.flatMap((product) =>

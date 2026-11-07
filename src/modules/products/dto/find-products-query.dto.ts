@@ -94,7 +94,7 @@ export class FindProductsQueryDto {
   @IsNumber()
   @IsPositive()
   @ApiPropertyOptional({
-    description: 'Filtra por tenant en operaciones administrativas',
+    description: 'Filtra por company en operaciones administrativas',
   })
   tenant_id?: number;
 }

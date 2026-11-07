@@ -7,19 +7,19 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Raw, Repository } from 'typeorm';
 import { hashPassword } from '../../common/utils/bcrypt.util';
-import { CreateTenantDto } from './dtos/create-tenant.dto';
-import { UpdateTenantDto } from './dtos/update-tenant.dto';
-import { TenantEntity } from './entities/tenant.entity';
+import { CreateCompanyDto } from './dtos/create-company.dto';
+import { UpdateCompanyDto } from './dtos/update-company.dto';
+import { CompanyEntity } from './entities/company.entity';
 
 @Injectable()
-export class TenantsService {
+export class CompaniesService {
   constructor(
-    @InjectRepository(TenantEntity)
-    private readonly tenantRepository: Repository<TenantEntity>,
+    @InjectRepository(CompanyEntity)
+    private readonly companyRepository: Repository<CompanyEntity>,
   ) {}
 
-  async findByDomain(domain: string): Promise<TenantEntity | null> {
-    return await this.tenantRepository.findOne({
+  async findByDomain(domain: string): Promise<CompanyEntity | null> {
+    return await this.companyRepository.findOne({
       where: { domain, isActive: true },
       select: [
         'id',
@@ -33,8 +33,8 @@ export class TenantsService {
     });
   }
 
-  async findByApiKey(apiKey: string): Promise<TenantEntity | null> {
-    return await this.tenantRepository.findOne({
+  async findByApiKey(apiKey: string): Promise<CompanyEntity | null> {
+    return await this.companyRepository.findOne({
       where: {
         isActive: true,
         access_keys: Raw(
@@ -55,8 +55,8 @@ export class TenantsService {
     });
   }
 
-  async findByMercadopagoUserId(userId?: string): Promise<TenantEntity | null> {
-    return await this.tenantRepository.findOne({
+  async findByMercadopagoUserId(userId?: string): Promise<CompanyEntity | null> {
+    return await this.companyRepository.findOne({
       where: {
         isActive: true,
         access_keys: Raw(
@@ -78,32 +78,32 @@ export class TenantsService {
   }
 
   /**
-   * Busca un tenant por ID (uso interno)
+   * Busca un company por ID (uso interno)
    *
-   * @param id - ID del tenant
-   * @returns TenantEntity completo
+   * @param id - ID del company
+   * @returns CompanyEntity completo
    * @throws NotFoundException si no existe o no está activo
    */
-  async findById(id: number): Promise<TenantEntity> {
-    const tenant = await this.tenantRepository.findOne({
+  async findById(id: number): Promise<CompanyEntity> {
+    const company = await this.companyRepository.findOne({
       where: { id, isActive: true },
     });
-    if (!tenant) {
-      throw new NotFoundException(`Tenant with ID ${id} not found`);
+    if (!company) {
+      throw new NotFoundException(`Company with ID ${id} not found`);
     }
-    return tenant;
+    return company;
   }
 
   /**
-   * Busca un tenant por nombre (usado en autenticación)
+   * Busca un company por nombre (usado en autenticación)
    * Retorna password para validación de credenciales
    *
-   * @param param - Nombre del tenant
-   * @returns TenantEntity con: id, name, email, picture, role, password
+   * @param param - Nombre del company
+   * @returns CompanyEntity con: id, name, email, picture, role, password
    * @throws HttpException si no existe
    */
-  async findOneByName(param: string): Promise<TenantEntity> {
-    const user = await this.tenantRepository.findOne({
+  async findOneByName(param: string): Promise<CompanyEntity> {
+    const user = await this.companyRepository.findOne({
       where: { name: param },
       // Retorna solo password para autenticación
       select: ['id', 'name', 'email', 'picture', 'role', 'password', 'company'],
@@ -123,7 +123,7 @@ export class TenantsService {
    */
   private async verifyUnique(name?: string, email?: string) {
     // Verifica nombre único
-    await this.tenantRepository.find({ where: { name: name } }).then((user) => {
+    await this.companyRepository.find({ where: { name: name } }).then((user) => {
       if (user.length > 0) {
         throw new HttpException(
           `El nombre de usuario ya exíste`,
@@ -133,7 +133,7 @@ export class TenantsService {
     });
 
     // Verifica email único
-    await this.tenantRepository.find({ where: { email } }).then((user) => {
+    await this.companyRepository.find({ where: { email } }).then((user) => {
       if (user.length > 0) {
         throw new HttpException(
           `El correo electrónico ya exíste`,
@@ -146,44 +146,44 @@ export class TenantsService {
   }
 
   /**
-   * Crea un nuevo tenant
+   * Crea un nuevo company
    * ACCESO RESTRINGIDO: Solo root/admin
    *
-   * @param data - CreateTenantDto con datos del tenant
-   * @returns TenantEntity creado
+   * @param data - CreateCompanyDto con datos del company
+   * @returns CompanyEntity creado
    * @throws HttpException si nombre/email ya existen
    */
-  async create(data: CreateTenantDto) {
+  async create(data: CreateCompanyDto) {
     // Verificamos si el usuario ya existe
     await this.verifyUnique(data.name, data.email);
 
     if (!data.password) {
-      return await this.tenantRepository.save(
-        this.tenantRepository.create(data),
+      return await this.companyRepository.save(
+        this.companyRepository.create(data),
       );
     }
 
     // Encriptamos la contraseña con bcrypt
     const hashedPassword = await hashPassword(data.password);
 
-    const newTenant = this.tenantRepository.create({
+    const newCompany = this.companyRepository.create({
       ...data,
       password: hashedPassword,
     });
 
-    return await this.tenantRepository.save(newTenant);
+    return await this.companyRepository.save(newCompany);
   }
 
   /**
-   * Actualiza un tenant existente
+   * Actualiza un company existente
    * ACCESO RESTRINGIDO: Solo root/admin
    *
-   * @param id - ID del tenant a actualizar
-   * @param data - UpdateTenantDto con campos a actualizar
+   * @param id - ID del company a actualizar
+   * @param data - UpdateCompanyDto con campos a actualizar
    * @throws HttpException si nombre/email (al actualizarse) ya existen
    * @throws HttpException con mensaje de éxito
    */
-  async update(id: number, data: UpdateTenantDto): Promise<void> {
+  async update(id: number, data: UpdateCompanyDto): Promise<void> {
     // Verificamos si el nombre y el correo electrónico son únicos
     if (data.name || data.email)
       await this.verifyUnique(data?.name, data?.email);
@@ -192,7 +192,7 @@ export class TenantsService {
     if (data.password) {
       const hashedPassword = await hashPassword(data.password);
 
-      await this.tenantRepository.update(
+      await this.companyRepository.update(
         { id },
         { ...data, password: hashedPassword },
       );
@@ -201,32 +201,32 @@ export class TenantsService {
     }
 
     // Actualiza otros campos
-    await this.tenantRepository.update({ id }, data);
+    await this.companyRepository.update({ id }, data);
 
     throw new HttpException(`User successfully updated`, HttpStatus.OK);
   }
 
   /**
-   * Elimina un tenant (solo el registro, en realidad debería soft-delete)
+   * Elimina un company (solo el registro, en realidad debería soft-delete)
    * ACCESO RESTRINGIDO: Solo root/admin
    *
-   * @param id - ID del tenant a eliminar
+   * @param id - ID del company a eliminar
    * @throws HttpException con mensaje de éxito
    */
   async remove(id: number): Promise<void> {
-    await this.tenantRepository.delete({ id });
+    await this.companyRepository.delete({ id });
 
     throw new HttpException(`User successfully removed`, HttpStatus.OK);
   }
 
   /**
-   * Retorna todos los tenants activos
+   * Retorna todos los companies activos
    * NO se está usando actualmente
    *
-   * @returns Array de TenantEntity
+   * @returns Array de CompanyEntity
    */
-  async findAll(): Promise<TenantEntity[]> {
-    return await this.tenantRepository.find({
+  async findAll(): Promise<CompanyEntity[]> {
+    return await this.companyRepository.find({
       where: { isActive: true },
     });
   }

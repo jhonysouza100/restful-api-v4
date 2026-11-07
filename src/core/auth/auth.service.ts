@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
 import { jwtConstants } from '../../common/constants';
-import { TenantsService } from '../tenant/tenants.service';
+import { CompaniesService } from '../company/companies.service';
 import { LoginDto } from './dto/login.dto';
 import { TokenInterface } from './interfaces/token.interface';
 
@@ -10,13 +10,13 @@ import { TokenInterface } from './interfaces/token.interface';
 export class AuthService {
   constructor(
     private jwtService: JwtService,
-    private readonly tenantService: TenantsService,
+    private readonly companyService: CompaniesService,
   ) {}
 
   async login(
     credentials: LoginDto,
   ): Promise<{ token: string; payload: TokenInterface }> {
-    const userFound = await this.tenantService.findOneByName(credentials.name);
+    const userFound = await this.companyService.findOneByName(credentials.name);
 
     // brypt compare
     const checkPassword = await compare(

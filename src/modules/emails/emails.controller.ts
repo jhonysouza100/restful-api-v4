@@ -21,7 +21,7 @@ import {
   ApiUnauthorizedResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
+import { UseCompanyGuard } from '../../core/company/decorators/company.decorator';
 import { SendEmailDto } from './dtos/send-mail.dto';
 import { EmailsService } from './emails.service';
 import {
@@ -51,7 +51,7 @@ class ParseJSONPipe implements PipeTransform {
   }
 }
 
-@UseTenantGuard()
+@UseCompanyGuard()
 @ApiTags('Emails')
 @ApiHeader({
   name: 'x-api-key',
@@ -75,7 +75,7 @@ export class EmailsController {
   })
   @ApiUnauthorizedResponse({
     description:
-      'Unauthorized. Tenant identification required. Provide x-api-key header or use domain in URL',
+      'Unauthorized. Company identification required. Provide x-api-key header or use domain in URL',
     type: EmailErrorResponse,
   })
   @ApiConsumes('multipart/form-data')

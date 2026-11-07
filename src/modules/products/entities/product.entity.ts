@@ -12,7 +12,7 @@ import {
 import { ProductCategoryEnum } from '../enums/products.enum';
 
 @Entity('products')
-@Index(['tenant_id', 'id']) // Indice compuesto para acelerar las busquedas por tenant
+@Index(['tenant_id', 'id']) // Indice compuesto para acelerar las busquedas por company
 export class Product {
   @PrimaryGeneratedColumn()
   id: number;

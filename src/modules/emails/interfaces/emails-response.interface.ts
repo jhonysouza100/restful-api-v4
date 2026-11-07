@@ -17,7 +17,7 @@ export class EmailCreatedResponse {
 export class EmailErrorResponse {
   @ApiProperty({
     example:
-      'Tenant identification required. Provide x-api-key header or use domain in URL',
+      'Company identification required. Provide x-api-key header or use domain in URL',
   })
   message: string;
 

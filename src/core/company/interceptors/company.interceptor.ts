@@ -5,18 +5,18 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { TenantContext } from '../tenant.context';
+import { CompanyContext } from '../company.context';
 
 @Injectable()
-export class TenantInterceptor implements NestInterceptor {
-  constructor(private readonly tenantContext: TenantContext) {}
+export class CompanyInterceptor implements NestInterceptor {
+  constructor(private readonly companyContext: CompanyContext) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
-    const tenant = request.tenant;
+    const company = request.company;
 
-    if (tenant) {
-      this.tenantContext.setTenantData(tenant);
+    if (company) {
+      this.companyContext.setCompanyData(company);
     }
 
     return next.handle();

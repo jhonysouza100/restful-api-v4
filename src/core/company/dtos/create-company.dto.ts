@@ -13,7 +13,7 @@ import { Role } from '../../../common/enums/roles.enum';
 export class CreateAccessKeysDto {
   @ApiProperty({
     description:
-      'Clave secreta de la API del tenant para autenticación en endpoints protegidos.',
+      'Clave secreta de la API del company para autenticación en endpoints protegidos.',
     example: 'x-api-abcdef1234567890',
   })
   @IsOptional()
@@ -37,7 +37,7 @@ export class CreateAccessKeysDto {
   mercadopago_user_id: string;
 }
 
-export class CreateTenantDto {
+export class CreateCompanyDto {
   @ApiProperty({
     description: 'Nombre de usuario',
     example: 'admin123',
@@ -55,8 +55,8 @@ export class CreateTenantDto {
   fullName?: string;
 
   @ApiProperty({
-    description: 'Correo público de contacto del tenant',
-    example: 'tenant1@gmail.com',
+    description: 'Correo público de contacto del company',
+    example: 'company1@gmail.com',
   })
   @IsOptional()
   @IsEmail()
@@ -72,7 +72,7 @@ export class CreateTenantDto {
   password?: string;
 
   @ApiProperty({
-    description: 'Dominio del tenant (ej: mycompany.com)',
+    description: 'Dominio del company (ej: mycompany.com)',
     example: 'mycompany.com',
   })
   @IsOptional()
@@ -87,13 +87,13 @@ export class CreateTenantDto {
   @IsString()
   picture?: string;
 
-  @ApiProperty({ description: 'El ROL del un tenant', example: Role.ADMIN })
+  @ApiProperty({ description: 'El ROL del un company', example: Role.ADMIN })
   @IsOptional()
   @IsEnum(Role)
   role?: Role;
 
   @ApiProperty({
-    description: 'Indica si el tenant está verificado',
+    description: 'Indica si el company está verificado',
     example: true,
   })
   @IsOptional()

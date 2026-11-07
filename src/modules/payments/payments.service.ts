@@ -25,13 +25,13 @@ export class PaymentsService {
         })),
         auto_return: 'approved',
         back_urls: {
-          success: `${data.back_urls?.success || `${data.tenant.domain}/payment/success`}`,
-          failure: `${data.back_urls?.failure || `${data.tenant.domain}/payment/failure`}`,
-          pending: `${data.back_urls?.pending || `${data.tenant.domain}/payment/pending`}`,
+          success: `${data.back_urls?.success || `${data.company.domain}/payment/success`}`,
+          failure: `${data.back_urls?.failure || `${data.company.domain}/payment/failure`}`,
+          pending: `${data.back_urls?.pending || `${data.company.domain}/payment/pending`}`,
         },
         external_reference: data.order_id.toString(),
         notification_url: `${env.SERVER_URL}/api/v1/orders/confirm/mercadopago`,
-        statement_descriptor: `${data.tenant.company}`,
+        statement_descriptor: `${data.company.company}`,
         payment_methods: {
           excluded_payment_types: data.payment_methods?.excluded_payment_types,
           excluded_payment_methods:
@@ -49,7 +49,7 @@ export class PaymentsService {
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${data.tenant.private_key}`,
+            Authorization: `Bearer ${data.company.private_key}`,
             'Content-Type': 'application/json',
             // Integrator Id
             'x-integrator-id': 'dev_24c65fb163bf11ea96500242ac130004',
