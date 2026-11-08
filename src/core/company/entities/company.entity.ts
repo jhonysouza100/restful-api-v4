@@ -2,10 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Role } from '../../../common/enums/roles.enum';
+import { AdminEntity } from '../../admins/entities/admin.entity';
 import { CreateAccessKeysDto } from '../dtos/create-company.dto';
 import { CreatePrivateKeysDto } from '../dtos/update-company.dto';
 
@@ -32,9 +34,6 @@ export class CompanyEntity {
   @Column({ type: 'varchar', length: 510, nullable: true })
   picture: string;
 
-  @Column({ type: 'enum', enum: Role, default: Role.ADMIN })
-  role: Role;
-
   @Column({ type: 'boolean', nullable: true, default: false })
   verified: boolean;
 
@@ -49,6 +48,13 @@ export class CompanyEntity {
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
+
+  @ManyToOne(() => AdminEntity, (admin) => admin.companies, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'admin_id' })
+  admin: AdminEntity | null;
 
   @CreateDateColumn()
   createdAt: Date;

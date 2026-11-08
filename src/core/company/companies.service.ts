@@ -33,6 +33,22 @@ export class CompaniesService {
     });
   }
 
+  async findPublicByAdminId(
+    adminId: number,
+  ): Promise<
+    Array<
+      Pick<CompanyEntity, 'id' | 'fullName' | 'picture' | 'domain' | 'email'>
+    >
+  > {
+    return this.companyRepository.find({
+      where: {
+        admin: { id: adminId },
+        isActive: true,
+      },
+      select: ['id', 'fullName', 'picture', 'domain', 'email'],
+    });
+  }
+
   async findByApiKey(apiKey: string): Promise<CompanyEntity | null> {
     return await this.companyRepository.findOne({
       where: {
@@ -106,7 +122,7 @@ export class CompaniesService {
     const user = await this.companyRepository.findOne({
       where: { name: param },
       // Retorna solo password para autenticación
-      select: ['id', 'name', 'email', 'picture', 'role', 'password', 'company'],
+      select: ['id', 'name', 'email', 'picture', 'password', 'company'],
     });
     if (!user) {
       throw new HttpException(`Usuario no encontrado`, HttpStatus.NOT_FOUND);

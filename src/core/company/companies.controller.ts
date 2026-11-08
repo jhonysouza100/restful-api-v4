@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -8,18 +9,35 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
+import { AdminContext } from '../auth/auth.context';
 import { UseRoleAuthToken } from '../auth/decorators/auth.decorator';
+import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dtos/create-company.dto';
 import { UpdateCompanyDto } from './dtos/update-company.dto';
-import { CompaniesService } from './companies.service';
 
 @ApiTags('Companies')
 @Controller('companies')
 export class CompaniesController {
-  constructor(private readonly companiesService: CompaniesService) {}
+  constructor(
+    private readonly companiesService: CompaniesService,
+    private readonly adminContext: AdminContext,
+  ) {}
+
+  @Get()
+  @UseRoleAuthToken(Role.ADMIN)
+  @ApiOperation({
+    summary: 'Listar compañías del administrador',
+    description:
+      'Retorna las compañías activas asociadas al administrador autenticado con sus datos públicos.',
+  })
+  async findByAdmin() {
+    return this.companiesService.findPublicByAdminId(
+      this.adminContext.getAuthId(),
+    );
+  }
 
   @Post()
-  @UseRoleAuthToken(Role.ROOT)
+  @UseRoleAuthToken(Role.ADMIN)
   @ApiOperation({
     summary: 'Crear company',
     description: 'Crea un nuevo company con la información proporcionada.',
@@ -31,13 +49,13 @@ export class CompaniesController {
   async create(@Body() createCompanyDto: CreateCompanyDto) {
     try {
       return this.companiesService.create(createCompanyDto);
-    } catch (error) {
+    } catch (error: any) {
       return error.message;
     }
   }
 
   @Patch(':id')
-  @UseRoleAuthToken(Role.ROOT)
+  @UseRoleAuthToken(Role.ADMIN)
   @ApiOperation({
     summary: 'Actualizar company',
     description: 'Actualiza los datos de un company existente por su id.',
@@ -58,7 +76,7 @@ export class CompaniesController {
   ) {
     try {
       return this.companiesService.update(id, updateCompanyDto);
-    } catch (error) {
+    } catch (error: any) {
       return error.message;
     }
   }

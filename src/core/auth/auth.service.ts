@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
 import { jwtConstants } from '../../common/constants';
-import { CompaniesService } from '../company/companies.service';
+import { AdminsService } from '../admins/admins.service';
 import { LoginDto } from './dto/login.dto';
 import { TokenInterface } from './interfaces/token.interface';
 
@@ -10,37 +10,33 @@ import { TokenInterface } from './interfaces/token.interface';
 export class AuthService {
   constructor(
     private jwtService: JwtService,
-    private readonly companyService: CompaniesService,
+    private readonly adminsService: AdminsService,
   ) {}
 
   async login(
     credentials: LoginDto,
-  ): Promise<{ token: string; payload: TokenInterface }> {
-    const userFound = await this.companyService.findOneByName(credentials.name);
-
-    // brypt compare
-    const checkPassword = await compare(
-      credentials.password,
-      userFound.password,
+  ): Promise<{ token: string; }> {
+    const userFound = await this.adminsService.findOneByUsername(
+      credentials.username,
     );
+
+    const checkPassword = await compare(credentials.password, userFound.password);
     if (!checkPassword)
       throw new UnauthorizedException('Contraseña incorrecta');
 
     const payload: TokenInterface = {
       id: userFound.id,
-      name: userFound.name,
-      email: userFound.email,
+      username: userFound.username,
+      email: userFound.email ?? '',
       role: userFound.role,
-      picture: userFound.picture,
-      company: userFound.company,
+      picture: userFound.picture ?? '',
     };
 
-    // Genera el token JWT
     const token = await this.jwtService.signAsync(payload, {
       secret: jwtConstants.secret,
     });
 
-    return { token, payload };
+    return { token };
   }
 
   async verify(token: string): Promise<TokenInterface> {

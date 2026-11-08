@@ -10,6 +10,7 @@ import { CompanyInterceptor } from './company/interceptors/company.interceptor';
 import { CompanyContext } from './company/company.context';
 import { CompaniesController } from './company/companies.controller';
 import { CompaniesService } from './company/companies.service';
+import { AdminsModule } from './admins/admins.module';
 
 @Global()
 @Module({
@@ -19,6 +20,7 @@ import { CompaniesService } from './company/companies.service';
       signOptions: { expiresIn: '1d' },
     }),
     TypeOrmModule.forFeature([CompanyEntity]),
+    AdminsModule,
   ],
   controllers: [CompaniesController, AuthController],
   providers: [

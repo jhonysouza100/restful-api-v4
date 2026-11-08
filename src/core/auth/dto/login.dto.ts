@@ -10,7 +10,7 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty()
   @Length(1, 320)
-  name: string;
+  username: string;
 
   @ApiProperty({
     description: 'Contraseña del usuario',

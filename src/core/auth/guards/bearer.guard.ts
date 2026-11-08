@@ -36,7 +36,7 @@ export class BearerGuard implements CanActivate {
 
       // (Antes) Guarda las credenciales del auth en un contexto
       // Otros servicios pueden acceder al company actual inyectando AdminContext
-      this.adminContext.setAuthData(payload);
+      this.adminContext.setAuthData({id: payload.id});
 
       request['admin'] = payload;
     } catch {

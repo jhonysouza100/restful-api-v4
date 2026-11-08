@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { UseRoleAuthToken } from './decorators/auth.decorator';
@@ -31,7 +22,7 @@ export class AuthController {
   login(@Body() credentials: LoginDto) {
     try {
       return this.authService.login(credentials);
-    } catch (error) {
+    } catch (error: any) {
       return error.message;
     }
   }
@@ -45,7 +36,7 @@ export class AuthController {
   verify(@Req() request: any) {
     try {
       return request.admin;
-    } catch (error) {
+    } catch (error: any) {
       return error.message;
     }
   }
