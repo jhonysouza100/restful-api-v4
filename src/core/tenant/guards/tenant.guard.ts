@@ -1,28 +1,28 @@
 import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
+    CanActivate,
+    ExecutionContext,
+    Injectable,
+    UnauthorizedException,
 } from '@nestjs/common';
-import { CompanyEntity } from '../entities/company.entity';
-import { CompanyContext } from '../company.context';
-import { CompaniesService } from '../companies.service';
+import { CompaniesService } from '../../company/companies.service';
+import { CompanyEntity } from '../../company/entities/company.entity';
+import { TenantContext } from '../tenant.context';
 
 /**
- * CompanyGuard
+ * TenantGuard
  *
  * Guard que valida y establece el contexto del company para cada request.
- * TODOS los endpoints que usen @UseGuards(CompanyGuard) estarán protegidos
- * y tendrán acceso al company actual mediante CompanyContext.
+ * TODOS los endpoints que usen @UseGuards(TenantGuard) estarán protegidos
+ * y tendrán acceso al company actual mediante TenantContext.
  *
  * Métodos de identificación (en orden):
  * 1. Header x-api-key -> busca por API Key
  * 2. Header Origin -> busca por dominio
  */
 @Injectable()
-export class CompanyGuard implements CanActivate {
+export class TenantGuard implements CanActivate {
   constructor(
-    private readonly companyContext: CompanyContext,
+    private readonly tenantContext: TenantContext,
     private readonly companiesService: CompaniesService,
   ) {}
 
@@ -44,8 +44,8 @@ export class CompanyGuard implements CanActivate {
     }
 
     // Guarda las credenciales del company en el servicio de contexto
-    // Otros servicios pueden acceder al company actual inyectando CompanyContext
-    this.companyContext.setCompanyData(company);
+    // Otros servicios pueden acceder al company actual inyectando TenantContext
+    this.tenantContext.setCompanyData(company);
 
     // No se esta usando, !!! Su implementacion requiere acceder a los request en todos los endpoints (Mucho codigo).
     request.company = company;

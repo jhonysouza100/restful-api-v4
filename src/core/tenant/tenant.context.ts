@@ -2,10 +2,10 @@ import { Injectable, Scope } from '@nestjs/common';
 import {
   CorreoArgentinoDto,
   CreatePrivateKeysDto,
-} from './dtos/update-company.dto';
+} from '../company/dtos/update-company.dto';
 
 /**
- * CompanyContext
+ * TenantContext
  *
  * Servicio de contexto multi-company con SCOPE REQUEST.
  *
@@ -14,45 +14,42 @@ import {
  * sin riesgo de contaminación entre requests concurrentes.
  *
  * Uso:
- * - El CompanyGuard establece el contexto: setCompanyData()
+ * - El TenantGuard establece el contexto: setCompanyData()
  * - Otros servicios acceden inyectando este servicio
  * - Los datos se limpian automáticamente al terminar el request
  */
 @Injectable({ scope: Scope.REQUEST })
-export class CompanyContext {
+export class TenantContext {
   /**
    * Almacena datos del company actual
    * Se limpia automáticamente al finalizar el request
    */
   private companyData: {
     id: number;
+    name: string;
     email: string;
     domain: string;
-    company: string;
-    fullName: string;
     private_keys: CreatePrivateKeysDto;
   };
 
   /**
    * Establece las credenciales del company actual
-   * Llamado por CompanyGuard después de validar el company
+   * Llamado por TenantGuard después de validar el company
    *
    * @param data - Datos del company (id, email, domain, etc.)
    */
   setCompanyData(data: {
     id: number;
+    name: string;
     email: string;
     domain: string;
-    company: string;
-    fullName: string;
     private_keys: CreatePrivateKeysDto;
   }): void {
     this.companyData = {
       id: data.id,
+      name: data.name,
       email: data.email,
       domain: data.domain,
-      company: data.company,
-      fullName: data.fullName,
       private_keys: data.private_keys,
     };
   }
@@ -73,20 +70,13 @@ export class CompanyContext {
     return this.companyData.domain;
   }
 
-  /**
-   * Obtiene el nombre de la empresa del company actual
-   * @returns Nombre de empresa
-   */
-  getCompanyCompany(): string {
-    return this.companyData.company;
-  }
 
   /**
    * Obtiene el nombre completo del company actual
    * @returns Nombre completo del proprietario
    */
-  getFullName(): string {
-    return this.companyData.fullName;
+  getCompanyName(): string {
+    return this.companyData.name;
   }
 
   /**

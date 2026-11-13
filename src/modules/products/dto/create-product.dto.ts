@@ -6,13 +6,13 @@ class ProductImageInterface {
     example: 'imagen123',
     description: 'ID público de la imagen en el servicio de almacenamiento',
   })
-  public_id: string;
+  public_id!: string;
 
   @ApiProperty({
     example: 'https://example.com/imagen.jpg',
     description: 'URL segura de la imagen',
   })
-  secure_url: string;
+  secure_url!: string;
 }
 
 class ProductSpecificationsInterface {
@@ -20,13 +20,13 @@ class ProductSpecificationsInterface {
     example: 'Conectividad',
     description: 'Etiqueta de la especificación del producto',
   })
-  label: string;
+  label!: string;
 
   @ApiProperty({
     example: 'USB-C',
     description: 'Valor de la especificación del producto',
   })
-  value: string;
+  value!: string;
 }
 
 class ProductDimensionsInterface {
@@ -34,35 +34,38 @@ class ProductDimensionsInterface {
     example: 500,
     description: 'Peso del producto en centimetros',
   })
-  weight: number;
+  weight!: number;
 
   @ApiProperty({
     example: 10,
     description: 'Altura del producto en centimetros',
   })
-  height: number;
+  height!: number;
 
   @ApiProperty({
     example: 20,
     description: 'Ancho del producto en centimetros',
   })
-  width: number;
+  width!: number;
 
   @ApiProperty({ example: 1000, description: 'Largo del producto en gramos' })
-  length: number;
+  length!: number;
 }
 
 class ProductColorInterface {
   @ApiProperty({ example: 'Rojo', description: 'Nombre del color' })
-  name: string;
+  name!: string;
 
   @ApiProperty({ example: '#f00', description: 'Código del color' })
-  value: string;
+  value!: string;
 }
 
 export class CreateProductDto {
+  @ApiProperty({ example: 1, description: 'ID de la compañía propietaria del producto' })
+  company_id!: number;
+
   @ApiProperty({ example: 'Laptop', description: 'Nombre del producto' })
-  name: string;
+  name!: string;
 
   @ApiProperty({
     example: 'Articulo Varios',
@@ -80,7 +83,7 @@ export class CreateProductDto {
     example: 'Laptop de gama alta',
     description: 'Descripción del producto',
   })
-  description: string;
+  description!: string;
 
   @ApiProperty({
     example: ProductCategoryEnum.OTHER,
@@ -131,7 +134,7 @@ export class CreateProductDto {
   color?: ProductColorInterface;
 
   @ApiProperty({ example: 999.99, description: 'Precio del producto' })
-  price: number;
+  price!: number;
 
   @ApiProperty({
     example: 100,

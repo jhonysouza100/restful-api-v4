@@ -9,5 +9,5 @@ export class DuplicateProductsDto {
   @IsArray()
   @ArrayNotEmpty()
   @IsInt({ each: true })
-  ids: number[];
+  ids!: number[];
 }

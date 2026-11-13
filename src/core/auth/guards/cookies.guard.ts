@@ -1,21 +1,21 @@
 // Obtiene el usuario de la token de Header: "Cookies: auth-token"
 import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
+    CanActivate,
+    ExecutionContext,
+    Injectable,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { jwtConstants } from '../../../common/constants';
-import { AdminContext } from '../auth.context';
+import { AutenticationContext } from '../auth.context';
 import { TokenInterface } from '../interfaces/token.interface';
 
 @Injectable()
 export class CookiesGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly adminContext: AdminContext,
+    private readonly authenticationContext: AutenticationContext,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -35,8 +35,8 @@ export class CookiesGuard implements CanActivate {
       // console.log(payload); // Log the payload for debugging purposes
 
       // (Antes) Guarda las credenciales del auth en un contexto
-      // Otros servicios pueden acceder al company actual inyectando AdminContext
-      this.adminContext.setAuthData({id: payload.id});
+      // Otros servicios pueden acceder al company actual inyectando AutenticationContext
+      this.authenticationContext.setAdminData({id: payload.id});
 
       request['admin'] = payload;
     } catch {

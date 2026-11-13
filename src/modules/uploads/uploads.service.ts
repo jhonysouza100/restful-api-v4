@@ -31,13 +31,26 @@ export class UploadsService {
       }
 
       const buffer = file.buffer;
+      const seoName = file.originalname
+        .replace(/\.[^.]+$/, '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      // console.log(`Subiendo imagen: ${seoName} a la carpeta: ${folder}`);
 
       try {
         const uploadResult: UploadApiResponse = await new Promise(
           (resolve, reject) => {
             cloudinary.uploader
               .upload_stream(
-                { folder: `${folder}`, resource_type: 'image' },
+                { folder: `${folder}`, // Guarda el archivo dentro de una carpeta especifica.
+                  resource_type: 'image',
+                  public_id: seoName, // Cloudinary no requiere incluir la extensión en el nombre del archivo.
+                  unique_filename: false, // Evita que Cloudinary le agregue un sufijo aleatorio.
+                  use_filename: true, // usa el nombre interno si no se define public_id.
+                }, 
                 (
                   error: UploadApiErrorResponse | undefined,
                   result: UploadApiResponse | undefined,

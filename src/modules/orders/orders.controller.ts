@@ -19,7 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
-import { UseCompanyGuard } from '../../core/company/decorators/company.decorator';
+import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { MercadopagoWebhookPayload } from '../payments/interfaces/mercadopago-webhook.interface';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { FindOrdersQueryDto } from './dto/find-orders-query.dto';
@@ -91,7 +91,7 @@ export class OrdersController {
   }
 
   @Post('free-shipping')
-  @UseCompanyGuard()
+  @UseTenantGuard()
   @ApiHeader({
     name: 'x-api-key',
     description: 'API Key (optional if using domain)',
@@ -116,7 +116,7 @@ export class OrdersController {
   }
 
   @Post()
-  @UseCompanyGuard()
+  @UseTenantGuard()
   @ApiHeader({
     name: 'x-api-key',
     description: 'API Key (optional if using domain)',

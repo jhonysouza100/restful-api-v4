@@ -2,15 +2,17 @@ import { Global, Module } from '@nestjs/common';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { jwtConstants } from '../common/constants';
-import { AdminContext } from './auth/auth.context';
+import { AdminsController } from './admins/admins.controller';
+import { AdminsService } from './admins/admins.service';
+import { AdminEntity } from './admins/entities/admin.entity';
+import { AutenticationContext } from './auth/auth.context';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
-import { CompanyEntity } from './company/entities/company.entity';
-import { CompanyInterceptor } from './company/interceptors/company.interceptor';
-import { CompanyContext } from './company/company.context';
 import { CompaniesController } from './company/companies.controller';
 import { CompaniesService } from './company/companies.service';
-import { AdminsModule } from './admins/admins.module';
+import { CompanyEntity } from './company/entities/company.entity';
+import { TenantInterceptor } from './tenant/interceptors/tenant.interceptor';
+import { TenantContext } from './tenant/tenant.context';
 
 @Global()
 @Module({
@@ -19,23 +21,24 @@ import { AdminsModule } from './admins/admins.module';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '1d' },
     }),
-    TypeOrmModule.forFeature([CompanyEntity]),
-    AdminsModule,
+    TypeOrmModule.forFeature([CompanyEntity, AdminEntity]),
   ],
-  controllers: [CompaniesController, AuthController],
+  controllers: [CompaniesController, AdminsController, AuthController],
   providers: [
-    CompanyContext,
+    TenantContext,
     CompaniesService,
-    CompanyInterceptor,
+    AdminsService,
+    TenantInterceptor,
     AuthService,
-    AdminContext,
+    AutenticationContext,
     JwtService,
   ],
   exports: [
-    CompanyContext,
+    TenantContext,
     CompaniesService,
-    CompanyInterceptor,
-    AdminContext,
+    AdminsService,
+    TenantInterceptor,
+    AutenticationContext,
     JwtService,
   ],
 })

@@ -10,7 +10,7 @@ Eres especialista en el backend NestJS de este repositorio. Tu responsabilidad e
 ## Alcance
 - Trabaja principalmente en `src/modules/orders` y en los módulos directamente involucrados en el flujo.
 - Respeta NestJS, TypeScript, TypeORM, DTOs, entidades, guards y servicios existentes.
-- Mantén el aislamiento por company mediante `CompanyContext` y las comprobaciones de autorización existentes.
+- Mantén el aislamiento por company mediante `TenantContext` y las comprobaciones de autorización existentes.
 - Responde en español, salvo que el usuario pida otro idioma.
 
 ## Restricciones

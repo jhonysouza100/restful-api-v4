@@ -2,9 +2,9 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindOptionsWhere, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { env } from '../../common/config/env.config';
-import { AdminContext } from '../../core/auth/auth.context';
-import { CompanyContext } from '../../core/company/company.context';
+import { AutenticationContext } from '../../core/auth/auth.context';
 import { CompaniesService } from '../../core/company/companies.service';
+import { TenantContext } from '../../core/tenant/tenant.context';
 import { SendEmailDto } from '../emails/dtos/send-mail.dto';
 import { EmailsService } from '../emails/emails.service';
 import { CreateOrderDto, CreateOrderShipmentDto, CretateOrderItemsDto } from '../orders/dto/create-order.dto';
@@ -23,9 +23,9 @@ import { ShipmentStatusEnum } from '../shipments/enum/delivery-status.enum';
 import { ShipmentsService } from '../shipments/shipments.service';
 import { FindOrdersQueryDto } from './dto/find-orders-query.dto';
 import {
-  UpdateOrderPaymentDto,
-  UpdateOrderShipmentDto,
-  UpdateOrderStatusDto,
+    UpdateOrderPaymentDto,
+    UpdateOrderShipmentDto,
+    UpdateOrderStatusDto,
 } from './dto/update-order.dto';
 import { OrderStatusEnum } from './enum/order-status.enum';
 import { OrderTopicEnum } from './enum/order-topic.enum';
@@ -37,8 +37,8 @@ export class OrdersService {
     @InjectRepository(Order) private readonly ordersRepo: Repository<Order>,
     private readonly productsService: ProductsService,
     private readonly paymentsService: PaymentsService,
-    private readonly adminContext: AdminContext,
-    private readonly companyContext: CompanyContext,
+    private readonly authenticationContext: AutenticationContext,
+    private readonly tenantContext: TenantContext,
     private readonly companyService: CompaniesService,
     private readonly shipmentService: ShipmentsService,
     private readonly emailsService: EmailsService
@@ -54,7 +54,7 @@ export class OrdersService {
      */
     const where: FindOptionsWhere<Order> = {};
 
-    where.tenant_id = this.adminContext.getAuthId();
+    where.tenant_id = this.authenticationContext.getAdminId();
 
     if (query.order_id !== undefined) where.id = query.order_id;
     if (query.status !== undefined) where.status = query.status;
@@ -148,7 +148,7 @@ export class OrdersService {
       throw new HttpException('No hay datos para actualizar', HttpStatus.BAD_REQUEST);
     }
 
-    const companyId = this.adminContext.getAuthId();
+    const companyId = this.authenticationContext.getAdminId();
     let updatedOrder: Order;
     let previousStatus: OrderStatusEnum = OrderStatusEnum.PENDING;
 
@@ -180,7 +180,7 @@ export class OrdersService {
     const email = order.shipment?.email;
     if (!email) return;
 
-    const company = await this.companyService.findById(order.tenant_id);
+    const company = await this.companyService.findOneById(order.tenant_id);
     const subject = action === 'status'
       ? `Actualización del estado de tu compra #${order.id}`
       : `Actualización de envío de tu compra #${order.id}`;
@@ -189,7 +189,7 @@ export class OrdersService {
       : `<p>La información de envío de tu orden fue actualizada.</p>`;
 
     await this.emailsService.sendMail({
-      from: company.company,
+      from: company.name,
       to: [email],
       subject,
       htmlContent: `<p>Hola ${order.shipment?.fullName || ''},</p>${statusText}<p>Compra #${order.id}</p>`,
@@ -237,7 +237,7 @@ export class OrdersService {
       data.items.map(async (el) => {
         try {
           // Busca y valida si un producto esta activo y/o posee stock y verifica la tenencia
-          const companyId = this.companyContext.getCompanyId();
+          const companyId = this.tenantContext.getCompanyId();
           const productFound = await this.productsService.validateProductForSale(el.item_id, el.quantity, companyId);
 
           // Devuelve un "item" (para crear una nueva "order") con los datos de un producto buscado en la database
@@ -262,7 +262,7 @@ export class OrdersService {
     const newOrderPayload: OrderInterface = {
       // coupon: { code: couponFound?.code || null, discount: couponFound?.discount || null },
       items: [...productsList],
-      tenant_id: this.companyContext.getCompanyId(),
+      tenant_id: this.tenantContext.getCompanyId(),
       user_id: data?.user_id || 0,
       subtotal: subtotal,
       total: Number(subtotal) - (Number(subtotal) * Number(couponFound?.discount || 0) / 100)
@@ -286,9 +286,9 @@ export class OrdersService {
       })),
       order_id: savedOrder.id,
       company: {
-        company: this.companyContext.getCompanyCompany(),
-        private_key: this.companyContext.getTanantMercadopago(),
-        domain: this.companyContext.getCompanyDomain()
+        company: this.tenantContext.getCompanyName(),
+        private_key: this.tenantContext.getTanantMercadopago(),
+        domain: this.tenantContext.getCompanyDomain()
       }
     }
 
@@ -297,7 +297,11 @@ export class OrdersService {
     let shipmentCost;
     if (data.shipment && calculateShipping) {
       // Se calcula el envío y las dimensiones del paquete.
-      const { dimensions, rate } = await this.getTotalShipmentCost(data.items, data.shipment);
+      const { dimensions, rate } = await this.getTotalShipmentCost(
+        data.items,
+        data.shipment,
+        savedOrder.tenant_id,
+      );
 
       dimensionsData = dimensions;
       shipmentCost = rate;
@@ -383,6 +387,12 @@ export class OrdersService {
       })
       const orderSearched = await this.ordersRepo.findOne({ where: { id: parseInt(preferenceSearched.external_reference) } })
 
+      // El tenant persistido en la orden es la fuente canónica. No se debe
+      // procesar un pago asociado a una compañía distinta.
+      if (orderSearched && companySearched?.id !== orderSearched.tenant_id) {
+        return;
+      }
+
       if (payload.action === MercadopagoWebhookAction.PAYMENT_UPDATED) {
         if (orderSearched?.payment) {
           // Se actualiza los datos del pago en la orden.
@@ -394,9 +404,12 @@ export class OrdersService {
           // Se guarda la orden actualizada.
           await this.ordersRepo.update({ id: orderSearched.id }, orderSearched);
           // Se restaura el inventario por cadaa item.
-          await this.productsService.restoreCancelledProduct(orderSearched?.items);
+          await this.productsService.restoreCancelledProduct(
+            orderSearched.items,
+            orderSearched.tenant_id,
+          );
           await this.notifyOrderByEmail({
-            from: `${companySearched?.company}`,
+            from: `${companySearched?.name}`,
             to: companySearched?.email as string,
             topic: `${OrderTopicEnum.PAGO_PENDIENTE}`,
             order: orderSearched
@@ -420,7 +433,7 @@ export class OrdersService {
               extOrderId: orderSearched.id.toString(),
               orderNumber: orderSearched.id.toString(),
               sender: {
-                name: companySearched?.fullName || ""
+                name: companySearched?.name || ""
               },
               recipient: {
                 name: orderSearched.shipment.fullName || "",
@@ -453,14 +466,17 @@ export class OrdersService {
           // Se guarda la orden actualizada.
           await this.ordersRepo.update({ id: orderSearched.id }, orderSearched);
           // Se descuenta el inventario y se registran unidades vendidas por cada item.
-          await this.productsService.subtractSoldProduct(orderSearched?.items);
+          await this.productsService.subtractSoldProduct(
+            orderSearched.items,
+            orderSearched.tenant_id,
+          );
           await this.productsService.incrementSales(
             orderSearched?.items,
             orderSearched.tenant_id,
           );
 
           await this.notifyOrderByEmail({
-            from: `${companySearched?.company}`,
+            from: `${companySearched?.name}`,
             to: companySearched?.email as string,
             topic: `${OrderTopicEnum.NUEVA_VENTA}`,
             order: orderSearched
@@ -468,7 +484,7 @@ export class OrdersService {
 
           await this.notificationCustomerByEmail({
             user: { email: companySearched?.email as string, pass: companySearched?.private_keys.smtp as string },
-            from: `${companySearched?.company}`,
+            from: `${companySearched?.name}`,
             to: orderSearched.shipment?.email || "",
             topic: `${OrderTopicEnum.PAGO_APROBADO}`,
             order: orderSearched
@@ -487,7 +503,11 @@ export class OrdersService {
   }
 
   // Función auxiliar para calcular las dimenciónes y el total del envio
-  private async getTotalShipmentCost(items: CretateOrderItemsDto[], shipmentData: CreateOrderShipmentDto): Promise<{
+  private async getTotalShipmentCost(
+    items: CretateOrderItemsDto[],
+    shipmentData: CreateOrderShipmentDto,
+    companyId: number,
+  ): Promise<{
     rate: number,
     dimensions: { height: number, length: number, width: number, weight: number, declaredValue: number }
   }> {
@@ -503,7 +523,10 @@ export class OrdersService {
     }> => {
       const productsWithQty = await Promise.all(
         items.map(async (item) => {
-          const productFound = await this.productsService.findOne(item.item_id);
+          const productFound = await this.productsService.findOne(
+            item.item_id,
+            companyId,
+          );
           return {
             productFound,
             quantity: item.quantity

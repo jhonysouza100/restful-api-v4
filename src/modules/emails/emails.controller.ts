@@ -21,7 +21,7 @@ import {
   ApiUnauthorizedResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { UseCompanyGuard } from '../../core/company/decorators/company.decorator';
+import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { SendEmailDto } from './dtos/send-mail.dto';
 import { EmailsService } from './emails.service';
 import {
@@ -51,7 +51,7 @@ class ParseJSONPipe implements PipeTransform {
   }
 }
 
-@UseCompanyGuard()
+@UseTenantGuard()
 @ApiTags('Emails')
 @ApiHeader({
   name: 'x-api-key',

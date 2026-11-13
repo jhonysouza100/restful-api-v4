@@ -9,9 +9,9 @@ import {
 import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../auth/decorators/auth.decorator';
+import { AdminsService } from './admins.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
-import { AdminsService } from './admins.service';
 
 @ApiTags('Admins')
 @Controller('admins')
@@ -29,7 +29,11 @@ export class AdminsController {
     description: 'Datos necesarios para crear un administrador.',
   })
   create(@Body() createAdminDto: CreateAdminDto) {
-    return this.adminsService.create(createAdminDto);
+    try {
+      return this.adminsService.create(createAdminDto);
+    } catch (error: any) {
+      return error.message;
+    }
   }
 
   @Patch(':id')
@@ -52,6 +56,11 @@ export class AdminsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateAdminDto: UpdateAdminDto,
   ) {
-    return this.adminsService.update(id, updateAdminDto);
+    try {
+      return this.adminsService.update(id, updateAdminDto);
+    } catch (error: any) {
+      return error.message;
+      
+    }
   }
 }

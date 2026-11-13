@@ -4,36 +4,43 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { CompanyEntity } from '../../../core/company/entities/company.entity';
 // import { QnA } from './QnA.entity';
 // import { Review } from './review.entity';
 import { ProductCategoryEnum } from '../enums/products.enum';
 
 @Entity('products')
-@Index(['tenant_id', 'id']) // Indice compuesto para acelerar las busquedas por company
+@Index(['company', 'id']) // Indice compuesto para acelerar las busquedas por company
 export class Product {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
-  @Column({ type: 'int' })
-  tenant_id: number;
+  @ManyToOne(() => CompanyEntity, (company) => company.products, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'tenant_id' })
+  company!: CompanyEntity;
 
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  name!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  slug: string;
+  slug!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  alias: string;
+  alias!: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  topic: string;
+  topic!: string;
 
   @Column({ type: 'text' })
-  description: string;
+  description!: string;
 
   @Column({
     type: 'enum',
@@ -41,19 +48,19 @@ export class Product {
     nullable: true,
     default: ProductCategoryEnum.OTHER,
   })
-  category: ProductCategoryEnum;
+  category!: ProductCategoryEnum;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  brand: string;
+  brand!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  model: string;
+  model!: string;
 
   @Column({ type: 'json', nullable: true })
-  specifications: { label: string; value: string }[];
+  specifications!: { label: string; value: string }[];
 
   @Column('simple-json', { nullable: true })
-  dimensions: {
+  dimensions!: {
     height: number;
     length: number;
     weight: number;
@@ -61,40 +68,40 @@ export class Product {
   };
 
   @Column('simple-json', { nullable: true })
-  image: { public_id: string; secure_url: string };
+  image!: { public_id: string; secure_url: string };
 
   @Column('simple-json', { nullable: true })
-  gallery: { public_id: string; secure_url: string }[];
+  gallery!: { public_id: string; secure_url: string }[];
 
   @Column({ type: 'simple-json', nullable: true })
-  color: {
+  color!: {
     name: string;
     value: string;
   };
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  price: number;
+  price!: number;
 
   @Column({ type: 'int', nullable: true, default: 1 })
-  stock: number;
+  stock!: number;
 
   @Column({ type: 'int', nullable: true, default: 1 })
-  maxCount: number;
+  maxCount!: number;
 
   @Column({ type: 'int', nullable: true, default: 1 })
-  minCount: number;
+  minCount!: number;
 
   @Column({ type: 'int', nullable: true, default: 0 })
-  discount: number;
+  discount!: number;
 
   @Column({ type: 'simple-json', nullable: true })
-  performance: {
+  performance!: {
     sales: number;
     rating: number;
   };
 
   @Column({ type: 'boolean', nullable: true, default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   // @OneToMany(() => QnA, qna => qna.product, { cascade: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   // questions: QnA[];
@@ -103,10 +110,10 @@ export class Product {
   // reviews: Review[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @BeforeInsert()
   // @ts-ignore - TypeORM lifecycle hook - automatically invoked by TypeORM

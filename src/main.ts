@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { v2 as cloudinary } from 'cloudinary';
+import 'multer';
 import { AppModule } from './app.module';
 import { env } from './common/config/env.config';
 

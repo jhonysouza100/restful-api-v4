@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Repository } from 'typeorm';
-import { AdminContext } from '../../core/auth/auth.context';
-import { CompanyContext } from '../../core/company/company.context';
+import { CompaniesService } from '../../core/company/companies.service';
+import { TenantContext } from '../../core/tenant/tenant.context';
 import { UploadsService } from '../uploads/uploads.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { FindProductsQueryDto } from './dto/find-products-query.dto';
@@ -14,8 +14,8 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productsRepo: Repository<Product>,
-    private readonly adminContext: AdminContext,
-    private readonly companyContext: CompanyContext,
+    private readonly companiesService: CompaniesService,
+    private readonly tenantContext: TenantContext,
     private readonly uploadsService: UploadsService,
   ) {}
 
@@ -26,15 +26,16 @@ export class ProductsService {
       gallery?: Express.Multer.File[] | undefined;
     } = {},
   ) {
+    const company = await this.companiesService.findOneByAdmin(createProductDto.company_id);
     const newProduct = this.productsRepo.create({
       ...createProductDto,
-      tenant_id: this.adminContext.getAuthId(),
+      company: { id: company.id },
     });
 
     if (files.gallery && files.gallery.length > 0) {
       const uploadedGallery = await this.uploadsService.uploadImages(
         files.gallery,
-        `products/${this.adminContext.getAuthCompany()}`,
+        `products/${company.name}`,
       );
       newProduct.gallery = uploadedGallery;
     }
@@ -42,7 +43,7 @@ export class ProductsService {
     if (files.image) {
       const [uploadedImage] = await this.uploadsService.uploadImages(
         files.image,
-        `products/${this.adminContext.getAuthCompany()}`,
+        `products/${company.name}`,
       );
       newProduct.image = uploadedImage;
     }
@@ -60,7 +61,7 @@ export class ProductsService {
     const topic = query.topic?.trim();
     const terms = search.split(/\s+/).filter(Boolean);
     const id = query.id;
-    const isActive = query.isActive ?? query.status;
+    const isActive = query.isActive;
     const hasStock = query.stock;
     const minPrice = query.minPrice;
     const maxPrice = query.maxPrice;
@@ -83,9 +84,11 @@ export class ProductsService {
       .take(limit);
 
     if (query.tenant_id !== undefined) {
-      queryBuilder.andWhere('product.tenant_id = :companyId', {
-        companyId: query.tenant_id,
-      });
+      queryBuilder
+        .innerJoin('product.company', 'company')
+        .andWhere('company.id = :companyId', {
+          companyId: query.tenant_id,
+        });
     }
 
     if (topic) {
@@ -145,8 +148,10 @@ export class ProductsService {
   }
 
   // Este es un método "privado" encargado de buscar productos por su ID.
-  async findOne(id: number) {
-    const product = await this.productsRepo.findOne({ where: { id } });
+  async findOne(id: number, companyId: number) {
+    const product = await this.productsRepo.findOne({
+      where: { id, company: { id: companyId } },
+    });
     if (!product)
       throw new HttpException(
         `Producto ${id} no encontrado`,
@@ -162,7 +167,7 @@ export class ProductsService {
     tenant_id: number,
   ) {
     const product = await this.productsRepo.findOne({
-      where: { id, tenant_id },
+      where: { id, company: { id: tenant_id } },
     });
 
     if (!product)
@@ -191,33 +196,90 @@ export class ProductsService {
   }
 
   // Método interno encargado de descontar el inventario.
-  async subtractSoldProduct(data?: { item_id?: number; quantity: number }[]) {
+  async subtractSoldProduct(
+    data: { item_id?: number; quantity: number }[] | undefined,
+    companyId: number,
+  ) {
     if (!data?.length) return;
 
-    await Promise.all(
-      data.map(async (itemSold) => {
-        // Si el item no posee ID, este puede ser un envio.
-        if (!itemSold.item_id) return;
+    const quantities = this.getProductQuantities(data);
+    await this.productsRepo.manager.transaction(async (manager) => {
+      for (const [productId, quantity] of quantities) {
+        // Decremento condicional y aritmético en la base de datos: evita
+        // sobreventa y actualizaciones perdidas ante operaciones concurrentes.
+        const result = await manager
+          .createQueryBuilder()
+          .update(Product)
+          .set({ stock: () => 'COALESCE(stock, 0) - :quantity' })
+          .where('id = :productId')
+          .andWhere('tenant_id = :companyId')
+          .andWhere('COALESCE(stock, 0) >= :quantity')
+          .setParameters({ productId, companyId, quantity })
+          .execute();
 
-        const product = await this.findOne(itemSold.item_id);
+        if (result.affected === 0) {
+          await this.ensureProductExists(productId, companyId, manager);
+          throw new HttpException(
+            `Stock insuficiente para el producto ${productId}`,
+            HttpStatus.CONFLICT,
+          );
+        }
 
-        const newStock = product.stock - itemSold.quantity;
+        // Se ejecuta después del decremento, dentro de la misma transacción,
+        // para que el estado refleje el stock ya actualizado.
+        await manager
+          .createQueryBuilder()
+          .update(Product)
+          .set({ isActive: () => 'COALESCE(stock, 0) > 0' })
+          .where('id = :productId')
+          .andWhere('tenant_id = :companyId')
+          .setParameters({ productId, companyId })
+          .execute();
+      }
+    });
+  }
 
-        await this.productsRepo.update(
-          { id: product.id },
-          {
-            stock: newStock,
-            isActive: newStock > 0,
-          },
+  private getProductQuantities(
+    data: { item_id?: number; quantity: number }[],
+  ): Map<number, number> {
+    const quantities = new Map<number, number>();
+    for (const item of data) {
+      // Items sin ID representan conceptos como el envío.
+      if (!item.item_id) continue;
+      if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+        throw new HttpException(
+          'La cantidad debe ser un entero positivo',
+          HttpStatus.BAD_REQUEST,
         );
-      }),
-    );
+      }
+      quantities.set(
+        item.item_id,
+        (quantities.get(item.item_id) ?? 0) + item.quantity,
+      );
+    }
+    return quantities;
+  }
+
+  private async ensureProductExists(
+    productId: number,
+    companyId: number,
+    manager: Repository<Product>['manager'],
+  ): Promise<void> {
+    const productExists = await manager.getRepository(Product).exists({
+      where: { id: productId, company: { id: companyId } },
+    });
+    if (!productExists) {
+      throw new HttpException(
+        `Producto ${productId} no encontrado`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
   }
 
   // Incrementa las unidades vendidas de forma transaccional y aislada por tienda.
   async incrementSales(
     data?: { item_id: number; quantity: number }[],
-    companyId = this.companyContext.getCompanyId(),
+    companyId = this.tenantContext.getCompanyId(),
   ) {
     if (!data?.length) return;
 
@@ -239,7 +301,7 @@ export class ProductsService {
     await this.productsRepo.manager.transaction(async (manager) => {
       for (const [productId, quantity] of quantities) {
         const product = await manager.findOne(Product, {
-          where: { id: productId, tenant_id: companyId },
+          where: { id: productId, company: { id: companyId } },
           lock: { mode: 'pessimistic_write' },
         });
         if (!product) {
@@ -261,28 +323,41 @@ export class ProductsService {
 
   // Método interno encargado de restaurar el inventario de ventas canceladas.
   async restoreCancelledProduct(
-    data?: { item_id?: number; quantity: number }[],
+    data: { item_id?: number; quantity: number }[] | undefined,
+    companyId: number,
   ) {
     if (!data?.length) return;
 
-    await Promise.all(
-      data.map(async (itemSold) => {
-        // Si el item no posee ID, puede tratarse de un envío.
-        if (!itemSold.item_id) return;
+    const quantities = this.getProductQuantities(data);
+    await this.productsRepo.manager.transaction(async (manager) => {
+      for (const [productId, quantity] of quantities) {
+        const result = await manager
+          .createQueryBuilder()
+          .update(Product)
+          .set({ stock: () => 'COALESCE(stock, 0) + :quantity' })
+          .where('id = :productId')
+          .andWhere('tenant_id = :companyId')
+          .setParameters({ productId, companyId, quantity })
+          .execute();
 
-        const product = await this.findOne(itemSold.item_id);
+        if (result.affected === 0) {
+          await this.ensureProductExists(productId, companyId, manager);
+          throw new HttpException(
+            `No se pudo restaurar el stock del producto ${productId}`,
+            HttpStatus.CONFLICT,
+          );
+        }
 
-        const restoredStock = product.stock + itemSold.quantity;
-
-        await this.productsRepo.update(
-          { id: product.id },
-          {
-            stock: restoredStock,
-            isActive: restoredStock > 0,
-          },
-        );
-      }),
-    );
+        await manager
+          .createQueryBuilder()
+          .update(Product)
+          .set({ isActive: () => 'COALESCE(stock, 0) > 0' })
+          .where('id = :productId')
+          .andWhere('tenant_id = :companyId')
+          .setParameters({ productId, companyId })
+          .execute();
+      }
+    });
   }
 
   private parseStringToArray(idsParam: string): number[] {
@@ -313,8 +388,7 @@ export class ProductsService {
   // Este metodo se va utilizar en la "tienda" para cargar la pagina de un producto por el slug (nombre amigable para URL). (Controller Scope).
   async findBySlug(slug: string) {
     const product = await this.productsRepo.findOne({
-      where: { slug, tenant_id: this.companyContext.getCompanyId() },
-      relations: ['questions', 'reviews'],
+      where: { slug, company: { id: this.tenantContext.getCompanyId() } },
     }); // { where: { name: Like(`%${name}%`) } }
     if (!product)
       throw new HttpException(
@@ -326,9 +400,9 @@ export class ProductsService {
 
   // Este metodo se va utilizar en la "tienda" para crear el sitemap de todos los productos de forma dinámica. (Controller Scope).
   async getSitemapBySlug() {
-    const companyId = this.companyContext.getCompanyId();
+    const companyId = this.tenantContext.getCompanyId();
     const productsBySlug = await this.productsRepo.find({
-      where: { isActive: true, tenant_id: companyId },
+      where: { isActive: true, company: { id: companyId } },
       select: ['slug', 'image', 'updatedAt'],
     });
     return productsBySlug;
@@ -342,9 +416,16 @@ export class ProductsService {
       gallery?: Express.Multer.File[];
     } = {},
   ) {
-    const productFound = await this.findOne(id);
-    if (productFound.tenant_id !== this.adminContext.getAuthId())
-      throw new HttpException('Usuario no autorizado', HttpStatus.UNAUTHORIZED);
+    const company = await this.companiesService.findOneByAdmin(data.company_id);
+    const productFound = await this.productsRepo.findOne({
+      where: { id, company: { id: data.company_id } },
+    });
+    if (!productFound) {
+      throw new HttpException(
+        `Producto ${id} no encontrado`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
 
     if (data.image?.public_id === 'temp_id') {
       data.image = undefined;
@@ -395,7 +476,7 @@ export class ProductsService {
       }
       const [uploadedImage] = await this.uploadsService.uploadImages(
         files.image,
-        `products/${this.adminContext.getAuthCompany()}`,
+        `products/${company.name}`,
       );
       data.image = uploadedImage;
     }
@@ -403,7 +484,7 @@ export class ProductsService {
     if (files.gallery?.length) {
       const uploadedGallery = await this.uploadsService.uploadImages(
         files.gallery,
-        `products/${this.adminContext.getAuthCompany()}`,
+        `products/${company.name}`,
       );
       data.gallery = [
         ...(data.gallery ?? productFound.gallery ?? []),
@@ -420,7 +501,10 @@ export class ProductsService {
         .replace(/-+/g, '-')
         .replace(/^-+|-+$/g, '');
 
-      await this.productsRepo.update(id, { ...data, slug });
+      await this.productsRepo.update(
+        { id, company: { id: company.id } },
+        { ...data, slug },
+      );
 
       throw new HttpException(
         `${productFound.name} actualizado`,
@@ -428,17 +512,31 @@ export class ProductsService {
       );
     }
 
-    await this.productsRepo.update(id, data);
+    await this.productsRepo.update({ id, company: { id: company.id } }, data);
 
     throw new HttpException(`${productFound.name} actualizado`, HttpStatus.OK);
   }
 
   async duplicate(ids: number[]) {
-    const companyId = this.adminContext.getAuthId();
+    const companies = await this.companiesService.findAllByAdmin();
+    const companyIds = companies.map(({ id }) => id);
+    if (companyIds.length === 0) {
+      throw new HttpException(
+        'No se encontraron items para duplicar',
+        HttpStatus.NOT_FOUND,
+      );
+    }
 
-    const products = await this.productsRepo.find({
-      where: { id: In(ids), tenant_id: companyId },
-    });
+    // El ID del administrador no es el ID de la compañía. Filtramos por
+    // compañías propias y obtenemos solo el ID de la relación para duplicarla
+    // sin cargar las credenciales de CompanyEntity.
+    const { entities: products, raw } = await this.productsRepo
+      .createQueryBuilder('product')
+      .innerJoin('product.company', 'company')
+      .addSelect('company.id', 'companyId')
+      .where('product.id IN (:...ids)', { ids })
+      .andWhere('company.id IN (:...companyIds)', { companyIds })
+      .getRawAndEntities();
 
     if (products.length === 0) {
       throw new HttpException(
@@ -447,21 +545,29 @@ export class ProductsService {
       );
     }
 
-    const duplicatedProducts = products.map(
-      ({ id, createdAt, updatedAt, ...product }, index) =>
-        this.productsRepo.create({
-          ...product,
-          name: `${product.name} (Copia ${index + 1})`,
-          tenant_id: companyId,
-          image: product.image
-            ? { ...product.image, public_id: `copia_${index + 1}` }
-            : undefined,
-          gallery: product.gallery?.map((image, imageIndex) => ({
-            ...image,
-            public_id: `copia_${index + 1}_${imageIndex + 1}`,
-          })),
-      }),
-    );
+    const duplicatedProducts = products.map((sourceProduct, index) => {
+      const { id, createdAt, updatedAt, ...product } = sourceProduct;
+      // Estos campos se excluyen deliberadamente de la copia.
+      void id;
+      void createdAt;
+      void updatedAt;
+      const companyId = Number(
+        (raw[index] as { companyId: number | string }).companyId,
+      );
+
+      return this.productsRepo.create({
+        ...product,
+        name: `${product.name} (Copia ${index + 1})`,
+        company: { id: companyId },
+        image: product.image
+          ? { ...product.image, public_id: `copia_${index + 1}` }
+          : undefined,
+        gallery: product.gallery?.map((image, imageIndex) => ({
+          ...image,
+          public_id: `copia_${index + 1}_${imageIndex + 1}`,
+        })),
+      });
+    });
 
     await this.productsRepo.save(duplicatedProducts);
 
@@ -472,11 +578,22 @@ export class ProductsService {
   }
 
   async desactive(ids: number[]) {
-    const companyId = this.adminContext.getAuthId();
+    const companies = await this.companiesService.findAllByAdmin();
+    const companyIds = companies.map(({ id }) => id);
+    if (companyIds.length === 0) {
+      throw new HttpException(
+        'No se encontraron items para cambiar su estado',
+        HttpStatus.NOT_FOUND,
+      );
+    }
 
-    const products = await this.productsRepo.find({
-      where: { id: In(ids), tenant_id: companyId },
-    });
+    const { entities: products, raw } = await this.productsRepo
+      .createQueryBuilder('product')
+      .innerJoin('product.company', 'company')
+      .addSelect('company.id', 'companyId')
+      .where('product.id IN (:...ids)', { ids })
+      .andWhere('company.id IN (:...companyIds)', { companyIds })
+      .getRawAndEntities();
 
     if (products.length === 0) {
       throw new HttpException(
@@ -486,9 +603,15 @@ export class ProductsService {
     }
 
     await Promise.all(
-      products.map(({ id, isActive }) =>
-        this.productsRepo.update(id, { isActive: !isActive }),
-      ),
+      products.map(({ id, isActive }, index) => {
+        const companyId = Number(
+          (raw[index] as { companyId: number | string }).companyId,
+        );
+        return this.productsRepo.update(
+          { id, company: { id: companyId } },
+          { isActive: !isActive },
+        );
+      }),
     );
 
     throw new HttpException(
@@ -497,12 +620,12 @@ export class ProductsService {
     );
   }
 
-  async remove(idsParam: string) {
+  async remove(idsParam: string, companyId: number) {
+    await this.companiesService.findOneByAdmin(companyId);
     const ids = this.parseStringToArray(idsParam);
 
-    const companyId = this.adminContext.getAuthId();
     const products = await this.productsRepo.find({
-      where: { id: In(ids), tenant_id: companyId },
+      where: { id: In(ids), company: { id: companyId } },
     });
 
     if (products.length !== ids.length) {
@@ -514,7 +637,10 @@ export class ProductsService {
       );
     }
 
-    await this.productsRepo.delete({ id: In(ids), tenant_id: companyId });
+    await this.productsRepo.delete({
+      id: In(ids),
+      company: { id: companyId },
+    });
 
     await Promise.all(
       products.flatMap((product) =>

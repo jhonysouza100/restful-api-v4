@@ -124,7 +124,6 @@ Cada company tiene la siguiente estructura:
   name: string;            // Nombre del company
   domain: string;          // Dominio completo (ej: "mitienda.com") (opcional)
   apiKey: string;         // API Key única (opcional)
-  isActive: boolean;       // Estado activo/inactivo
   createdAt: Date;         // Fecha de creación
   updatedAt: Date;         // Fecha de actualización
 }
@@ -146,19 +145,19 @@ Algunos de los endpoints requieren identificar el company mediante:
 ## Componentes
 
 ### Guard (`company.guard.ts`)
-**Protege todos los endpoints que usan `@UseGuards(CompanyGuard)`**
+**Protege todos los endpoints que usan `@UseGuards(TenantGuard)`**
 
 Flujo:
 1. Extrae company del request por API Key o dominio
 2. Si no encuentra company → Lanza `UnauthorizedException`
-3. Si encuentra company → Guarda en `CompanyContext` para acceso posterior
+3. Si encuentra company → Guarda en `TenantContext` para acceso posterior
 4. Permite continuar con el request
 
 **Métodos de extracción** (en orden de prioridad):
 - Header `x-api-key` → Busca por apiKey
 - Header/Origin `origin` → Busca por dominio
 
-### Service: CompanyContext (`company-context.service.ts`)
+### Service: TenantContext (`company-context.service.ts`)
 **Scope REQUEST** - Se crea una instancia por cada request
 
 Gestiona el contexto del company actual en ese request:
@@ -178,11 +177,11 @@ getTanantMercadopago()            // Obtiene token Mercadopago
 
 ```
 1. Cliente envía request con x-api-key o desde origen específico
-2. CompanyGuard intercepta
+2. TenantGuard intercepta
 3. Guard extrae company mediante API Key o dominio
 4. Si no existe → 401 Unauthorized
-5. Guard guarda company en CompanyContext
-6. Otros servicios acceden al company actual via CompanyContext
+5. Guard guarda company en TenantContext
+6. Otros servicios acceden al company actual via TenantContext
 7. Request se procesa en contexto del company específico
 ```
 
@@ -199,11 +198,11 @@ Headers: x-api-key: abc123xyz...
 
 ### Acceder Datos del Company Actual (desde un Servicio)
 ```typescript
-constructor(private companyContext: CompanyContext) {}
+constructor(private tenantContext: TenantContext) {}
 
 async sendEmail() {
-  const companyId = this.companyContext.getCompanyId();
-  const email = this.companyContext.getCompanySMTP();
+  const companyId = this.tenantContext.getCompanyId();
+  const email = this.tenantContext.getCompanySMTP();
   // Usa estos datos...
 }
 ```
@@ -211,15 +210,15 @@ async sendEmail() {
 ## Puntos Importantes para Mantenimiento
 
 ### Seguridad
-- **Scope REQUEST**: `CompanyContext` se crea por request → No hay mezcla de datos entre companies
+- **Scope REQUEST**: `TenantContext` se crea por request → No hay mezcla de datos entre companies
 - **Select selectivo**: Queries solo retornan campos necesarios (ej: no retorna password en FindByApiKey)
 - **Hashing**: Contraseñas hasheadas con bcrypt, nunca almacenadas en texto plano
 
 ### Integración
 - **Módulo Global**: El CoreModule es `@Global()` → Disponible en toda la app
 - **Exporta**: Guard, Interceptor y Services se exportan para uso en otros módulos
-- **Multi-company automático**: Servicios que usan `CompanyContext` obtienen datos del company actual automáticamente
+- **Multi-company automático**: Servicios que usan `TenantContext` obtienen datos del company actual automáticamente
 
 ### Métodos No Usados
 - `findAll()` - Traería todos los companies (comentado/no usado)
-- `CompanyInterceptor` - Duplicado, el Guard ya maneja el contexto
+- `TenantInterceptor` - Duplicado, el Guard ya maneja el contexto

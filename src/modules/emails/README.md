@@ -7,7 +7,7 @@ Módulo responsable de enviar emails utilizando Nodemailer y Gmail. Implementa a
 
 ### Endpoint
 - **POST** `/emails` - Envía un email
-- Requiere `CompanyGuard` para validar el company (mediante header `x-api-key` o dominio)
+- Requiere `TenantGuard` para validar el company (mediante header `x-api-key` o dominio)
 - Retorna `201 Created` con información del envelope
 
 ## Estructura de Datos
@@ -36,7 +36,7 @@ EmailAttachmentsDto {
 ## Flujo de Ejecución
 
 1. Cliente envía POST a `/emails` con `SendEmailDto` y header `x-api-key`
-2. `CompanyGuard` valida el company
+2. `TenantGuard` valida el company
 3. `EmailsService` obtiene credenciales del company del contexto
 4. Crea transporter de Nodemailer con Gmail
 5. Envía email con Nodemailer
@@ -71,7 +71,7 @@ Headers: x-api-key: tu-api-key
 ## Puntos Importantes para Mantenimiento
 
 - **Multi-company**: Las credenciales se obtienen del contexto actual del company
-- **Seguridad**: Validación obligatoria mediante `CompanyGuard`
+- **Seguridad**: Validación obligatoria mediante `TenantGuard`
 - **Errores**: Se capturan excepciones de Nodemailer y se retornan como `HttpException`
 - **Attachments**: Soporta archivos adjuntos con personalización de nombres y tipos MIME
 - **Gmail SMTP**: Usar contraseña de aplicación específica para Gmail (no contraseña regular si 2FA está activo)

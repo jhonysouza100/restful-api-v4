@@ -14,7 +14,7 @@ export class CreateAdminDto {
   })
   @IsNotEmpty()
   @IsString()
-  username: string;
+  username!: string;
 
   @ApiProperty({
     description: 'Correo electrónico del administrador',
@@ -31,12 +31,5 @@ export class CreateAdminDto {
   @IsNotEmpty()
   @IsString()
   @MinLength(8)
-  password: string;
-
-  @ApiProperty({
-    description: 'Indica si el administrador está activo',
-    example: true,
-  })
-  @IsOptional()
-  isActive?: boolean;
+  password!: string;
 }

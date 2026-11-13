@@ -151,7 +151,7 @@ Las horas son para una sola persona y no incluyen tests automatizados. Cada tare
 | F1-01 | P0 | Confirmar `JWT_SECRET` desde entorno y expiración | F0-04 | S | 3 | 0.75 / 1.5 | Parcial |
 | F1-02 | P0 | Separar identificación pública y administración company | F0-05 | M | 4 | 1 / 2 | Parcial |
 | F1-03 | P0 | Proteger rutas administrativas de companies | F1-02 | M | 3 | 0.75 / 1.5 | Hecho: ROOT |
-| F1-04 | P0 | Normalizar `CompanyGuard` y `CompanyContext` | F1-02 | M | 4 | 1 / 2 | Parcial |
+| F1-04 | P0 | Normalizar `TenantGuard` y `TenantContext` | F1-02 | M | 4 | 1 / 2 | Parcial |
 | F1-05 | P0 | Aplicar filtro company a productos y órdenes | F1-04 | M | 4 | 1 / 2 | Parcial: productos |
 | F1-06 | P0 | Corregir CORS con `ALLOWED_ORIGINS` | F0-03 | S | 2 | 0.5 / 1 | Hecho |
 | F1-07 | P0 | Normalizar HTTP status y excepciones | F0-01 | M | 4 | 1 / 2 | Pendiente |

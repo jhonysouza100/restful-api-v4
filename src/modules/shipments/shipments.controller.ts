@@ -7,7 +7,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiParam } from '@nestjs/swagger';
-import { UseCompanyGuard } from '../../core/company/decorators/company.decorator';
+import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { GenerateMiCorreoRatesDto } from './dto/generate-micorreo-rates.dto';
 import { ImportMiCorreoShipmentDto } from './dto/import-micorreo-shipment.dto';
 import { ShipmentsService } from './shipments.service';
@@ -17,7 +17,7 @@ export class ShipmentsController {
   constructor(private readonly shipmentsService: ShipmentsService) {}
 
   @Post('micorreo/rates')
-  @UseCompanyGuard()
+  @UseTenantGuard()
   @ApiHeader({
     name: 'x-api-key',
     description: 'API Key (optional if using domain)',
@@ -36,7 +36,7 @@ export class ShipmentsController {
   }
 
   @Post('micorreo/import')
-  @UseCompanyGuard()
+  @UseTenantGuard()
   @ApiHeader({
     name: 'x-api-key',
     description: 'API Key (optional if using domain)',
@@ -55,7 +55,7 @@ export class ShipmentsController {
   }
 
   @Get('micorreo/agencies')
-  @UseCompanyGuard()
+  @UseTenantGuard()
   @ApiHeader({
     name: 'x-api-key',
     description: 'API Key (optional if using domain)',

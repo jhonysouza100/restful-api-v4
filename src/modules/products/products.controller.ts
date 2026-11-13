@@ -6,6 +6,7 @@ import {
   Get,
   Injectable,
   Param,
+  ParseIntPipe,
   Patch,
   PipeTransform,
   Post,
@@ -21,12 +22,13 @@ import {
   ApiHeader,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
-  getSchemaPath
+  getSchemaPath,
 } from '@nestjs/swagger';
 import { Role } from '../../common/enums/roles.enum';
 import { UseRoleAuthToken } from '../../core/auth/decorators/auth.decorator';
-import { UseCompanyGuard } from '../../core/company/decorators/company.decorator';
+import { UseTenantGuard } from '../../core/tenant/decorators/tenant.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { DuplicateProductsDto } from './dto/duplicate-products.dto';
 import { FindProductsQueryDto } from './dto/find-products-query.dto';
@@ -66,7 +68,13 @@ export class ProductsController {
   @ApiOperation({
     summary: 'Crear producto',
     description:
-      'Permite a un administrador crear un nuevo producto en el sistema.',
+      'Permite a un administrador crear un producto para una de sus compañías.',
+  })
+  @ApiQuery({
+    name: 'companyId',
+    type: Number,
+    required: true,
+    description: 'ID de la compañía propietaria del producto.',
   })
   @ApiConsumes('multipart/form-data')
   /**
@@ -163,7 +171,7 @@ export class ProductsController {
   }
 
   @Get(':slug')
-  @UseCompanyGuard()
+  @UseTenantGuard()
   @ApiHeader({
     name: 'x-api-key',
     description: 'API Key (optional if using domain)',
@@ -187,7 +195,7 @@ export class ProductsController {
   }
 
   @Get('/slug/sitemap')
-  @UseCompanyGuard()
+  @UseTenantGuard()
   @ApiHeader({
     name: 'x-api-key',
     description: 'API Key (optional if using domain)',
@@ -210,8 +218,13 @@ export class ProductsController {
   @UseRoleAuthToken(Role.ADMIN)
   @ApiOperation({
     summary: 'Actualizar producto',
-    description:
-      'Actualiza la información del producto identificado por su ID.',
+    description: 'Actualiza un producto perteneciente a la compañía indicada.',
+  })
+  @ApiQuery({
+    name: 'companyId',
+    type: Number,
+    required: true,
+    description: 'ID de la compañía propietaria del producto.',
   })
   @ApiParam({
     name: 'id',
@@ -253,8 +266,8 @@ export class ProductsController {
     ]),
   )
   update(
-    @Param('id') id: string,
-    @Body('product', ParseJSONPipe) product: UpdateProductDto,
+    @Param('id', ParseIntPipe) id: number,
+    @Body('product', ParseJSONPipe) updateproductDto: UpdateProductDto,
     @UploadedFiles()
     files: {
       image?: Express.Multer.File[];
@@ -262,7 +275,7 @@ export class ProductsController {
     },
   ) {
     try {
-      return this.productsService.update(+id, product, files);
+      return this.productsService.update(id, updateproductDto, files);
     } catch (error: any) {
       return error.message;
     }
@@ -272,15 +285,24 @@ export class ProductsController {
   @UseRoleAuthToken(Role.ADMIN)
   @ApiOperation({
     summary: 'Eliminar productos',
-    description: 'Elimina productos del sistema.',
+    description: 'Elimina productos pertenecientes a la compañía indicada.',
+  })
+  @ApiQuery({
+    name: 'companyId',
+    type: Number,
+    required: true,
+    description: 'ID de la compañía propietaria de los productos.',
   })
   @ApiParam({
     name: 'id',
     description: 'Identificador único de los productos a eliminar. [1,2,3]',
   })
-  remove(@Param('id') id: string) {
+  remove(
+    @Param('id') id: string,
+    @Query('companyId', ParseIntPipe) companyId: number,
+  ) {
     try {
-      return this.productsService.remove(id);
+      return this.productsService.remove(id, companyId);
     } catch (error: any) {
       return error.message;
     }

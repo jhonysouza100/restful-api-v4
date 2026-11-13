@@ -12,32 +12,29 @@ import { CompanyEntity } from '../../company/entities/company.entity';
 @Entity('admins')
 export class AdminEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'varchar', length: 100, unique: true })
-  username: string;
+  username!: string;
+
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
+  email!: string;
 
   @Column({ type: 'varchar', length: 255, select: false })
-  password: string;
+  password!: string;
 
-  @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
-  email: string;
-  
-  @Column({ type: 'varchar', length: 510, nullable: true })
-  picture: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  picture!: string;
 
   @Column({ type: 'enum', enum: Role, default: Role.ADMIN })
-  role: Role;
-
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  role!: Role;
 
   @OneToMany(() => CompanyEntity, (company) => company.admin)
-  companies: CompanyEntity[];
+  companies!: CompanyEntity[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

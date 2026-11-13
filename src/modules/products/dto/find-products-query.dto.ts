@@ -54,8 +54,8 @@ export class FindProductsQueryDto {
   @IsNumber()
   @Min(1)
   @Max(100)
-  @ApiPropertyOptional({ example: 20, default: 20, maximum: 100 })
-  limit = 6;
+  @ApiPropertyOptional({ example: 12, default: 12, maximum: 100 })
+  limit = 12;
 
   @IsOptional()
   @Type(() => Number)
@@ -70,12 +70,6 @@ export class FindProductsQueryDto {
   @Min(0)
   @ApiPropertyOptional({ example: 1000 })
   maxPrice?: number;
-
-  @IsOptional()
-  @Transform(toBoolean)
-  @IsBoolean()
-  @ApiPropertyOptional({ description: 'Filtra por el estado isActive' })
-  status?: boolean;
 
   @IsOptional()
   @Transform(toBoolean)

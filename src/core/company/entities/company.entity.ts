@@ -4,61 +4,56 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
+import { Product } from '../../../modules/products/entities/product.entity';
 import { AdminEntity } from '../../admins/entities/admin.entity';
-import { CreateAccessKeysDto } from '../dtos/create-company.dto';
-import { CreatePrivateKeysDto } from '../dtos/update-company.dto';
+import {
+  CreateAccessKeysDto,
+  CreatePrivateKeysDto,
+} from '../dtos/update-company.dto';
 
 @Entity('companies')
 export class CompanyEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'varchar', length: 100, unique: true })
-  name: string;
+  name!: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  fullName: string;
-
-  @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
-  email: string;
-
-  @Column({ type: 'varchar', length: 255, select: false, nullable: true })
-  password: string;
+  @Column({ type: 'varchar', length: 255, unique: true })
+  email!: string;
 
   @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
-  domain: string;
+  domain!: string;
 
   @Column({ type: 'varchar', length: 510, nullable: true })
-  picture: string;
+  picture!: string;
 
   @Column({ type: 'boolean', nullable: true, default: false })
-  verified: boolean;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  company: string;
+  verified!: boolean;
 
   @Column({ type: 'json', nullable: true })
-  access_keys: CreateAccessKeysDto;
+  access_keys!: CreateAccessKeysDto;
 
   @Column({ type: 'json', nullable: true, select: false })
-  private_keys: CreatePrivateKeysDto;
-
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  private_keys!: CreatePrivateKeysDto;
 
   @ManyToOne(() => AdminEntity, (admin) => admin.companies, {
-    nullable: true,
-    onDelete: 'SET NULL',
+    nullable: false,
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'admin_id' })
-  admin: AdminEntity | null;
+  admin!: AdminEntity | null;
+
+  @OneToMany(() => Product, (product) => product.company)
+  products!: Product[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

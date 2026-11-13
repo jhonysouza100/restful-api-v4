@@ -1,18 +1,18 @@
 import { Injectable, Scope } from '@nestjs/common';
 
 @Injectable({ scope: Scope.REQUEST })
-export class AdminContext {
-  private authData: {
+export class AutenticationContext {
+  private adminData: {
     id: number;
   };
 
-  setAuthData(data: { id: number; }): void {
-    this.authData = {
+  setAdminData(data: { id: number; }): void {
+    this.adminData = {
       id: data.id,
     };
   }
 
-  getAuthId(): number {
-    return this.authData.id;
+  getAdminId(): number {
+    return this.adminData.id;
   }
 }
