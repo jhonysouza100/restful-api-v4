@@ -62,7 +62,7 @@ class ProductColorInterface {
 
 export class CreateProductDto {
   @ApiProperty({ example: 1, description: 'ID de la compañía propietaria del producto' })
-  company_id!: number;
+  tenant_id!: number;
 
   @ApiProperty({ example: 'Laptop', description: 'Nombre del producto' })
   name!: string;

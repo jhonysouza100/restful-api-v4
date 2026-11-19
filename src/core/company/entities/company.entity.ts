@@ -33,7 +33,7 @@ export class CompanyEntity {
   picture!: string;
 
   @Column({ type: 'boolean', nullable: true, default: false })
-  verified!: boolean;
+  verified?: boolean;
 
   @Column({ type: 'json', nullable: true })
   access_keys!: CreateAccessKeysDto;

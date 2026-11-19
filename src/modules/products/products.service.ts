@@ -26,7 +26,7 @@ export class ProductsService {
       gallery?: Express.Multer.File[] | undefined;
     } = {},
   ) {
-    const company = await this.companiesService.findOneByAdmin(createProductDto.company_id);
+    const company = await this.companiesService.findOneByAdmin(createProductDto.tenant_id);
     const newProduct = this.productsRepo.create({
       ...createProductDto,
       company: { id: company.id },
@@ -416,9 +416,9 @@ export class ProductsService {
       gallery?: Express.Multer.File[];
     } = {},
   ) {
-    const company = await this.companiesService.findOneByAdmin(data.company_id);
+    const company = await this.companiesService.findOneByAdmin(data.tenant_id);
     const productFound = await this.productsRepo.findOne({
-      where: { id, company: { id: data.company_id } },
+      where: { id, company: { id: data.tenant_id } },
     });
     if (!productFound) {
       throw new HttpException(
